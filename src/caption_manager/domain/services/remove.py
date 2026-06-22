@@ -14,7 +14,7 @@ class RemoveService:
         for k, v in captions.caption_dict.items():
             for flag in remove_flags:
                 for caption in v:
-                    if flag in caption:
+                    if flag == caption:
                         try:
                             patched_captions[k].remove(caption)
                             logger.debug(f"Removed caption '{caption}' from '{k}' due to flag '{flag}'.")

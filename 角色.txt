@@ -1,34 +1,126 @@
-eyes
-hair
-mouth
-breasts
-cleavage
-navel
-stomach
-midriff
-collarbone
-armpits
-ass
+black hair
+blonde hair
+blue hair
+brown hair
+green hair
+grey hair
+light blue hair
+light brown hair
+light purple hair
+multicolored hair
+orange hair
+pink hair
+purple hair
+red hair
+silver hair
+streaked hair
+two-tone hair
+white hair
+gradient hair
+colored inner hair
+hair between eyes
+hair down
+hair ears
+hair flaps
+hair intakes
+hair pulled back
+hair rings
+hair up
+hair over one eye
+hair over shoulder
+hair behind ear
+swept bangs
+parted bangs
+asymmetrical bangs
+blunt bangs
+curly hair
+wavy hair
+straight hair
+messy hair
+floating hair
+long hair
+medium hair
+short hair
+very long hair
+very short hair
+absurdly long hair
 ahoge
-bangs
 sidelocks
-twintails
-ponytail
 braid
+braided hair rings
+crown braid
+single braid
+twin braids
+low twin braids
+front braid
+side braid
+french braid
 bun
-fang
-teeth
-tongue
-whiskers
-tail
-wings
-nose
+hair bun
+cone hair bun
+double bun
+single hair bun
+ponytail
+side ponytail
+high ponytail
+low ponytail
+short ponytail
+folded ponytail
+split ponytail
+twintails
+low twintails
+short twintails
+uneven twintails
+two side up
+one side up
+half updo
+updo
+alternate hairstyle
+official alternate hairstyle
+official alternate hair length
+aqua eyes
+black eyes
+blue eyes
+brown eyes
+green eyes
+grey eyes
+orange eyes
+pink eyes
+purple eyes
+red eyes
+white eyes
+yellow eyes
+heterochromia
+multicolored eyes
+gradient eyes
+breasts
+small breasts
+medium breasts
+large breasts
+huge breasts
+gigantic breasts
+flat chest
+pale skin
+dark skin
+tan
+tanned skin
+dark-skinned female
+dark-skinned male
 facial mark
 facial tattoo
-skin
-cat ears
-animal ears
-animal ear
-fake animal ears
+heart facial mark
+star facial mark
+dot nose
+mole
+mole under eye
+mole under mouth
+beauty mark
 aged down
+aged up
 child
+female child
+male child
+old
+old man
+old woman
+young
