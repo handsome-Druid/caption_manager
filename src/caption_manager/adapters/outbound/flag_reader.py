@@ -12,9 +12,9 @@ class FlagReaderImpl:
         if not file.endswith('.txt'):
             file += '.txt'
         file_path = (
-            Path(sys.argv[0]).parent / Path(file).resolve()
+            Path(sys.argv[0]).parent / Path("remove_flags/" + file).resolve()
             if "__compiled__" in globals() else
-            Path(__file__).parents[4] / Path(file).resolve()
+            Path(__file__).parents[4] / Path("remove_flags/" + file).resolve()
         )
         if not file_path.is_file():
             raise NotFileError(f"{file_path} is not a valid file.")
