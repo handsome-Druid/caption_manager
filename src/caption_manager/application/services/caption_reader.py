@@ -1,4 +1,4 @@
-from caption_manager.applications.ports.outbound import CaptionReaderPort
+from caption_manager.application.ports.outbound import CaptionReaderPort
 
 class CaptionReaderService:
 

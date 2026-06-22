@@ -1,7 +1,7 @@
 from logging import getLogger
 
 from caption_manager.domain.services import RemoveService as RemoveServiceDomain
-from caption_manager.applications.ports.outbound import CaptionReaderPort, FlagReaderPort, OverWritePort
+from caption_manager.application.ports.outbound import CaptionReaderPort, FlagReaderPort, OverWritePort
 
 logger = getLogger(__name__)
 
