@@ -1,0 +1,8 @@
+*
+!.gitignore
+!THIRD_PARTY_LICENSE
+!NOTICE.md
+!blacklist_tags.txt
+!character_tags.json
+!overlap_tags.json
+!overlap_tags_simplified.json

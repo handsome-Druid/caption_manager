@@ -23,7 +23,7 @@ class CaptionReaderImpl:
         self._cache.clear()
 
     async def _read_file(self, file_path: Path):
-        async with self.semaphore and aiofiles.open(file_path, mode='r', encoding='utf-8') as file:
+        async with self.semaphore, aiofiles.open(file_path, mode='r', encoding='utf-8') as file:
             content = await file.read()
         return content
     
@@ -32,9 +32,9 @@ class CaptionReaderImpl:
             logger.debug(f"Cache hit for folder: {folder}")
             return self._cache[folder]
         folder_path = (
-            Path(sys.argv[0]).parent / Path(folder).resolve()
+            Path(sys.argv[0]).parent / Path(folder)
             if "__compiled__" in globals() else
-            Path(__file__).parents[4] / Path(folder).resolve()
+            Path(__file__).parents[4] / Path(folder)
         )
         if not folder_path.is_dir():
             raise NotDirectoryError(f"{folder_path} is not a valid directory.")
@@ -45,13 +45,15 @@ class CaptionReaderImpl:
 
         task_list = [self._read_file(caption_file) for caption_file in caption_files]
         contents = await asyncio.gather(*task_list, return_exceptions=True)
-
+        base_exceptions: list[BaseException] = []
         for caption_file, content in zip(caption_files, contents):
             match content:
                 case Exception():
                     logger.exception(f"Failed to read {caption_file}")
-                case BaseException():
+                case asyncio.CancelledError():
                     raise content
+                case BaseException():
+                    base_exceptions.append(content)
                 case _:
                     cleaned_items = [
                         item
@@ -60,6 +62,8 @@ class CaptionReaderImpl:
                     ]
                     caption_list.extend(cleaned_items)
                     caption_dict[caption_file] = cleaned_items
+        if base_exceptions:
+            raise BaseExceptionGroup("Multiple exceptions occurred while reading caption files.", base_exceptions)
 
         captions = Captions(caption_dict=caption_dict, caption_set=set(caption_list))
         self._cache[folder] = captions

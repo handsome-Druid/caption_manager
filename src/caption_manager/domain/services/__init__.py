@@ -1,3 +1,3 @@
-from .remove import RemoveService
+from .blacklist import BlacklistService
 
-__all__ = ["RemoveService"]
+__all__ = ["BlacklistService"]
