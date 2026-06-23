@@ -8,16 +8,19 @@ class BlacklistService:
     
     @staticmethod
     def run(captions: Captions, blacklist_tags: list[str]):
-        removed_count = 0
-        flag_set = set(blacklist_tags)
+        removed_tags: set[str] = set()
+        blacklist_set = set(blacklist_tags)
 
         for key, caption_list in captions.caption_dict.items():
-            original_len = len(caption_list)
-            captions.caption_dict[key] = [caption for caption in caption_list if caption not in flag_set]
-            removed_in_key = original_len - len(captions.caption_dict[key])
-            removed_count += removed_in_key
+            kept = [caption for caption in caption_list if caption not in blacklist_set]
+            removed_in_key = [caption for caption in caption_list if caption in blacklist_set]
+            captions.caption_dict[key] = kept
+            removed_tags.update(removed_in_key)
 
-            if removed_in_key > 0:
-                logger.debug(f"Removed {removed_in_key} captions from '{key}'.")
+            if removed_in_key:
+                logger.debug(f"Removed {len(removed_in_key)} captions from '{key}' using blacklist.")
 
-        logger.info(f"Total captions removed: {removed_count} using blacklist.")
+        captions.caption_set.clear()
+        for caption_list in captions.caption_dict.values():
+            captions.caption_set.update(caption_list)
+        logger.info(f"Captions removed using blacklist: {removed_tags}")

@@ -7,7 +7,7 @@ class BlacklistTagsImpl:
     def __init__(self, file: str):
         self.file_path = (
             Path(__file__).parents[4] / Path(f"filtering_tags/{file}")
-            if "__compiled__" in globals()
+            if "__compiled__" not in globals()
             else Path(sys.argv[0]).parent
             / Path(f"filtering_tags/{file}")
         )

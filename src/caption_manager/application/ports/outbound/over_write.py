@@ -1,6 +1,7 @@
 from typing import Protocol
-from pathlib import Path
+
+from caption_manager.domain.models import Captions
 
 class OverWritePort(Protocol):
-    def run(self, patched_captions: dict[Path, list[str]]) -> None:
+    async def run(self, captions: Captions) -> None:
         ...
