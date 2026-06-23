@@ -1,8 +1,17 @@
 import sys
 from pathlib import Path
 
+from pydantic import BaseModel, Field
+
 from caption_manager.domain.exceptions import NotFileError
 from caption_manager.domain.models import CharacterTags
+
+
+class _CharacterTagsSchema(BaseModel):
+    whitelist: set[str] = Field(default_factory=set)
+    suffixes: list[set[str]] = Field(default_factory=list[set[str]])
+    prefixes: list[set[str]] = Field(default_factory=list[set[str]])
+
 
 class CharacterTagsImpl:
     _cache: CharacterTags | None = None
@@ -21,7 +30,12 @@ class CharacterTagsImpl:
         if self._cache:
             return self._cache
         with open(self.file_path, "r", encoding="utf-8") as file:
-            self._cache = CharacterTags.model_validate_json(file.read())
+            parsed = _CharacterTagsSchema.model_validate_json(file.read())
+            self._cache = CharacterTags(
+                whitelist=frozenset(parsed.whitelist),
+                suffixes=tuple(frozenset(tags) for tags in parsed.suffixes),
+                prefixes=tuple(frozenset(tags) for tags in parsed.prefixes),
+            )
         return self._cache
 
     def refresh(self):

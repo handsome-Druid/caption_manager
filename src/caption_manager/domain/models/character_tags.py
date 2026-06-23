@@ -1,7 +1,8 @@
-from pydantic import BaseModel, Field
+from dataclasses import dataclass
 
 
-class CharacterTags(BaseModel):
-    whitelist: set[str] = Field(default_factory=set)
-    suffixes: list[set[str]] = Field(default_factory=list[set[str]])
-    prefixes: list[set[str]] = Field(default_factory=list[set[str]])
+@dataclass(slots=True, frozen=True)
+class CharacterTags:
+    whitelist: frozenset[str]
+    suffixes: tuple[frozenset[str], ...]
+    prefixes: tuple[frozenset[str], ...]
