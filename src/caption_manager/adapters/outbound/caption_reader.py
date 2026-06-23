@@ -32,7 +32,7 @@ class CaptionReaderImpl:
             content = await file.read()
         return content
     
-    async def read_folder(self, folder: str) -> Captions:
+    async def read_folder(self, folder: str):
         if self._cache.get(folder):
             logger.debug(f"Cache hit for folder: {folder}")
             return self._cache[folder]

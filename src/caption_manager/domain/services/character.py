@@ -6,15 +6,15 @@ logger = getLogger(__name__)
 
 class CharacterService:
     @staticmethod
-    def _matches_prefix(caption: str, prefix: str) -> bool:
+    def _matches_prefix(caption: str, prefix: str):
         return caption == prefix or caption.startswith(f"{prefix} ")
 
     @staticmethod
-    def _matches_suffix(caption: str, suffix: str) -> bool:
+    def _matches_suffix(caption: str, suffix: str):
         return caption == suffix or caption.endswith(f" {suffix}")
 
     @staticmethod
-    def _is_kept(caption: str, character_tags: CharacterTags, index: int) -> bool:
+    def _is_kept(caption: str, character_tags: CharacterTags, index: int):
         return caption in character_tags.whitelist or (
             all(
                 not CharacterService._matches_prefix(caption, prefix)
