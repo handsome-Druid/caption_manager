@@ -5,7 +5,8 @@ import click
 import typer
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
+from fastapi.responses import JSONResponse
 from uvicorn.logging import DefaultFormatter
 
 from caption_manager.adapters.inbound.router import router as api_router
@@ -50,6 +51,15 @@ class _Server(uvicorn.Server):
             logger.info(f"Swagger UI available at {styled_url}")
 
 
+def _unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    getLogger("caption_manager").exception("Unhandled exception during request.")
+    detail = str(exc) if request.app.state.debug else "Internal Server Error"
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={"detail": detail},
+    )
+
+
 def create_app(
     *,
     blacklist_tags_file: str,
@@ -70,24 +80,23 @@ def create_app(
         blacklist_tags=blacklist_tags,
         overlap_tags=overlap_tags,
         character_tags=character_tags,
-        debug=debug
     )
 
     caption_reader_service = CaptionReaderService(
         caption_reader=caption_reader,
-        debug=debug
     )
 
     custom_remove_service = CustomRemoveService(
         caption_reader=caption_reader,
         over_write=over_write,
-        debug=debug
     )
 
     app = FastAPI(title="Caption Manager")
+    app.state.debug = debug
     app.state.auto_remove_service = auto_remove_service
     app.state.caption_reader_service = caption_reader_service
     app.state.custom_remove_service = custom_remove_service
+    app.add_exception_handler(Exception, _unhandled_exception_handler)
     app.include_router(api_router)
     return app
 

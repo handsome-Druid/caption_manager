@@ -23,15 +23,13 @@ class AutoRemoveService:
         blacklist_tags: BlacklistTagsPort,
         overlap_tags: OverlapTagsPort,
         character_tags: CharacterTagsPort,
-        debug: bool = False,
     ):
         self.captions_reader = caption_reader
         self.over_write = over_write
         self.blacklist_tags = blacklist_tags
         self.overlap_tags = overlap_tags
         self.character_tags = character_tags
-        self.debug = debug
-    
+
     def _refresh_all(self):
         self.captions_reader.refresh()
         logger.debug("Refreshed caption reader.")
@@ -42,16 +40,7 @@ class AutoRemoveService:
         self.character_tags.refresh()
         logger.debug("Refreshed character tags.")
 
-    def run(self, config: AutoRemoveConfig, folder: str) -> bool:
-        try:
-            return self._auto_remove(folder, config)
-        except Exception:
-            if self.debug:
-                raise
-            logger.exception("Error occurred during auto-remove process.")
-            return False
-
-    def _auto_remove(self, folder: str, config: AutoRemoveConfig):
+    def run(self, config: AutoRemoveConfig, folder: str):
         self._refresh_all()
         captions = asyncio.run(self.captions_reader.read_folder(folder))
         blacklist_tags = self.blacklist_tags.read()
@@ -63,4 +52,3 @@ class AutoRemoveService:
         for index in range(config.character_range):
             CharacterService.run(captions, character_tags, index)
         asyncio.run(self.over_write.run(captions))
-        return True
