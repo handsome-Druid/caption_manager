@@ -1,7 +1,6 @@
 from logging import INFO, DEBUG, StreamHandler, getLogger
 from socket import socket
 
-import click
 import typer
 import uvicorn
 from dotenv import load_dotenv
@@ -47,7 +46,7 @@ class _Server(uvicorn.Server):
     async def startup(self, sockets: list[socket] | None = None):
         await super().startup(sockets=sockets)
         if not self.should_exit:
-            styled_url = click.style(self._docs_url, bold=True)
+            styled_url = typer.style(self._docs_url, bold=True)
             logger.info(f"Swagger UI available at {styled_url}")
 
 
