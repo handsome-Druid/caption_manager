@@ -111,8 +111,7 @@ def serve(
     debug: bool = typer.Option(False, envvar="CAPTION_MANAGER_DEBUG", help="Enable passing exceptions to the frontend."),
 ):
     setup_logger(debug=debug)
-    if debug:
-        logger.info("Debug mode is enabled. Exceptions will be passed to the frontend.")
+    logger.debug("Debug mode is enabled. Exceptions will be passed to the frontend.")
     app = create_app(
         blacklist_tags_file=blacklist_tags_file,
         overlap_tags_file=overlap_tags_file,
