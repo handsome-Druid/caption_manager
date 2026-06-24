@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel
 
 from caption_manager.application.dto import AutoRemoveConfig
@@ -13,15 +13,14 @@ class AutoRemoveRequest(BaseModel):
     character_range: int = 0
 
 
-def get_auto_remove_service(request: Request) -> AutoRemoveServicePort:
-    return request.app.state.auto_remove_service
-
-
-@router.post("/auto_remove")
-def auto_remove(
-    body: AutoRemoveRequest,
-    service: AutoRemoveServicePort = Depends(get_auto_remove_service),
-) -> dict[str, str]:
+@router.post("/auto_remove", status_code=status.HTTP_204_NO_CONTENT)
+def auto_remove(body: AutoRemoveRequest, request: Request):
+    service: AutoRemoveServicePort = request.app.state.auto_remove_service
     config = AutoRemoveConfig(overlap=body.overlap, character_range=body.character_range)
-    service.run(config, body.folder)
-    return {"status": "ok"}
+    try:
+        if not service.run(config, body.folder):
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        ) from e

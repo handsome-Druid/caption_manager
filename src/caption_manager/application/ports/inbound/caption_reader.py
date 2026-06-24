@@ -1,10 +1,7 @@
-from typing import Protocol
+from typing import Protocol, Literal
 
 from caption_manager.domain.models import Captions
 
 class CaptionReaderServicePort(Protocol):
-    async def read_captions(self) -> Captions:
-        ...
-
-    def refresh(self) -> None:
+    async def read(self, folder: str) -> Captions | Literal[False]:
         ...
