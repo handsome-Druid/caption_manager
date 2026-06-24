@@ -33,11 +33,6 @@ def setup_logger(debug: bool = False):
     logger.addHandler(_handler)
     logger.propagate = False
 
-load_dotenv()
-
-cli = typer.Typer()
-
-
 class _Server(uvicorn.Server):
     def __init__(self, config: uvicorn.Config, docs_url: str):
         super().__init__(config)
@@ -99,7 +94,8 @@ def create_app(
     app.include_router(api_router)
     return app
 
-
+load_dotenv()
+cli = typer.Typer()
 @cli.command()
 def serve(
     host: str = typer.Option("127.0.0.1", envvar="CAPTION_MANAGER_HOST", help="Host to bind the server to."),
@@ -121,10 +117,5 @@ def serve(
     server = _Server(config, docs_url=f"http://{host}:{port}/docs")
     server.run()
 
-
-def main():
-    cli()
-
-
 if __name__ == "__main__":
-    main()
+    cli()
