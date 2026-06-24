@@ -17,7 +17,6 @@ class _OverlapTagsSchema(BaseModel):
     has_overlap: set[str] = Field(default_factory=set)
 
 class OverlapTagsImpl:
-    _cache: list[OverlapTags] | None = None
     overlap_tags_list = TypeAdapter(list[_OverlapTagsSchema])
 
     def __init__(self, file: str):
@@ -30,11 +29,9 @@ class OverlapTagsImpl:
     def read(self):
         if not self.file_path.is_file():
             raise NotFileError(f"{self.file_path} is not a valid file.")
-        if self._cache:
-            return self._cache
         with open(self.file_path, "r", encoding="utf-8") as file:
             parsed_list = self.overlap_tags_list.validate_json(file.read())
-            self._cache = [
+            return [
                 OverlapTags(
                     query=parsed.query,
                     post_count=parsed.post_count,
@@ -42,7 +39,3 @@ class OverlapTagsImpl:
                 )
                 for parsed in parsed_list
             ]
-        return self._cache
-    
-    def refresh(self):
-        self._cache = None

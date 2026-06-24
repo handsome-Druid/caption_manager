@@ -14,8 +14,6 @@ class _CharacterTagsSchema(BaseModel):
 
 
 class CharacterTagsImpl:
-    _cache: CharacterTags | None = None
-
     def __init__(self, file: str):
         self.file_path = (
             Path(__file__).parents[4] / Path(f"filtering_tags/{file}")
@@ -27,16 +25,10 @@ class CharacterTagsImpl:
     def read(self):
         if not self.file_path.is_file():
             raise NotFileError(f"{self.file_path} is not a valid file.")
-        if self._cache:
-            return self._cache
         with open(self.file_path, "r", encoding="utf-8") as file:
             parsed = _CharacterTagsSchema.model_validate_json(file.read())
-            self._cache = CharacterTags(
+            return CharacterTags(
                 whitelist=frozenset(parsed.whitelist),
                 suffixes=tuple(frozenset(tags) for tags in parsed.suffixes),
                 prefixes=tuple(frozenset(tags) for tags in parsed.prefixes),
             )
-        return self._cache
-
-    def refresh(self):
-        self._cache = None

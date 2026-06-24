@@ -6,6 +6,3 @@ class CaptionReaderPort(Protocol):
 
     async def read_folder(self, folder: str) -> Captions:
         ...
-
-    def refresh(self) -> None:
-        ...

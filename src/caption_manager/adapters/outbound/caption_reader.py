@@ -15,16 +15,11 @@ IMAGE_SUFFIXES = frozenset({
 })
 
 class CaptionReaderImpl:
-    _cache: dict[str, Captions] = {}
-
     def __init__(self, semaphore: asyncio.Semaphore | int = 5):
         self._semaphore = (
             semaphore if isinstance(semaphore, asyncio.Semaphore)
             else asyncio.Semaphore(semaphore)
         )
-
-    def refresh(self):
-        self._cache.clear()
 
     async def _read_file(self, file_path: Path, semaphore: asyncio.Semaphore):
         async with semaphore, aiofiles.open(file_path, mode='r', encoding='utf-8') as file:
@@ -32,9 +27,6 @@ class CaptionReaderImpl:
         return content
     
     async def read_folder(self, folder: str):
-        if self._cache.get(folder):
-            logger.debug(f"Cache hit for folder: {folder}")
-            return self._cache[folder]
         folder_path = (
             Path(sys.argv[0]).parent / Path(folder)
             if "__compiled__" in globals() else
@@ -80,5 +72,4 @@ class CaptionReaderImpl:
             raise BaseExceptionGroup("Multiple exceptions occurred while reading caption files.", base_exceptions)
         logger.info("Read %d caption files with a total of %d unique captions.", len(file_dict), len(caption_dict))
         captions = Captions(file_dict=file_dict, caption_dict=caption_dict)
-        self._cache[folder] = captions
         return captions
