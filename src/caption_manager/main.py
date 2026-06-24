@@ -42,7 +42,7 @@ class _Server(uvicorn.Server):
         await super().startup(sockets=sockets)
         if not self.should_exit:
             styled_url = typer.style(self._docs_url, bold=True)
-            logger.info(f"Swagger UI available at {styled_url}")
+            logger.debug(f"Swagger UI available at {styled_url}")
 
 
 def _unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
