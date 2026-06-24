@@ -1,3 +1,4 @@
+import asyncio
 from logging import INFO, DEBUG, StreamHandler, getLogger
 from socket import socket
 
@@ -6,9 +7,11 @@ import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from uvicorn.logging import DefaultFormatter
 
 from caption_manager.adapters.inbound.router import router as api_router
+from caption_manager.adapters.inbound.web import STATIC_DIR
 from caption_manager.adapters.outbound import (
     BlacklistTagsImpl,
     CaptionReaderImpl,
@@ -19,7 +22,8 @@ from caption_manager.adapters.outbound import (
 from caption_manager.application.services import (
     AutoRemoveService, 
     CaptionReaderService,
-    CustomRemoveService
+    CustomRemoveService,
+    AddPrefixService,
 )
 
 def setup_logger(debug: bool = False):
@@ -62,8 +66,10 @@ def create_app(
     debug: bool,
 ):
 
-    caption_reader = CaptionReaderImpl()
-    over_write = OverWriteImpl()
+    semaphore = asyncio.Semaphore(20)
+
+    caption_reader = CaptionReaderImpl(semaphore=semaphore)
+    over_write = OverWriteImpl(semaphore=semaphore)
     blacklist_tags = BlacklistTagsImpl(blacklist_tags_file)
     overlap_tags = OverlapTagsImpl(overlap_tags_file)
     character_tags = CharacterTagsImpl(character_tags_file)
@@ -85,13 +91,22 @@ def create_app(
         over_write=over_write,
     )
 
+    add_prefix_service = AddPrefixService(
+        caption_reader=caption_reader,
+        over_write=over_write,
+    )
+
     app = FastAPI(title="Caption Manager")
+
     app.state.debug = debug
     app.state.auto_remove_service = auto_remove_service
     app.state.caption_reader_service = caption_reader_service
     app.state.custom_remove_service = custom_remove_service
+    app.state.add_prefix_service = add_prefix_service
+    
     app.add_exception_handler(Exception, _unhandled_exception_handler)
     app.include_router(api_router)
+    app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="web")
     return app
 
 load_dotenv()
@@ -99,7 +114,7 @@ cli = typer.Typer()
 @cli.command()
 def serve(
     host: str = typer.Option("127.0.0.1", envvar="CAPTION_MANAGER_HOST", help="Host to bind the server to."),
-    port: int = typer.Option(8000, envvar="CAPTION_MANAGER_PORT", help="Port to bind the server to."),
+    port: int = typer.Option(1357, envvar="CAPTION_MANAGER_PORT", help="Port to bind the server to."),
     blacklist_tags_file: str = typer.Option("blacklist_tags.txt", envvar="CAPTION_MANAGER_BLACKLIST_TAGS_FILE", help="Path to the blacklist tags file."),
     overlap_tags_file: str = typer.Option("overlap_tags.json", envvar="CAPTION_MANAGER_OVERLAP_TAGS_FILE", help="Path to the overlap tags file."),
     character_tags_file: str = typer.Option("character_tags.json", envvar="CAPTION_MANAGER_CHARACTER_TAGS_FILE", help="Path to the character tags file."),

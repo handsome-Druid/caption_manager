@@ -11,7 +11,8 @@ class CaptionReaderService:
 
     async def read(self, folder: str):
         self._refresh_all()
-        return await self.caption_reader.read_folder(folder)
+        captions = await self.caption_reader.read_folder(folder)
+        return captions.caption_dict
 
     def _refresh_all(self):
         self.caption_reader.refresh()

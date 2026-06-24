@@ -30,7 +30,7 @@ class CharacterService:
     def run(captions: Captions, character_tags: CharacterTags, index: int):
         removed_tags: set[str] = set()
 
-        for key, caption_list in captions.caption_dict.items():
+        for key, caption_list in captions.file_dict.items():
             kept: list[str] = []
             removed_in_key: list[str] = []
             for caption in caption_list:
@@ -38,13 +38,15 @@ class CharacterService:
                     kept.append(caption)
                 else:
                     removed_in_key.append(caption)
-            captions.caption_dict[key] = kept
+            captions.file_dict[key] = kept
             removed_tags.update(removed_in_key)
 
             if removed_in_key:
                 logger.debug(f"Removed {len(removed_in_key)} captions from '{key}' using character tags at index {index}.")
 
-        captions.caption_set.clear()
-        for caption_list in captions.caption_dict.values():
-            captions.caption_set.update(caption_list)
-        logger.info(f"Captions removed using character tags at index {index}: {removed_tags}")
+        captions.caption_dict.clear()
+        for caption_list in captions.file_dict.values():
+            for caption in caption_list:
+                captions.caption_dict[caption] = captions.caption_dict.get(caption, 0) + 1
+        logger.info(f"{len(removed_tags)} captions removed using character tags at index {index}")
+        logger.debug(f"Removed captions: {removed_tags}")

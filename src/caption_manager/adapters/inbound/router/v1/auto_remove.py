@@ -13,8 +13,8 @@ class AutoRemoveRequest(BaseModel):
     character_range: int = 0
 
 
-@router.post("/auto_remove", status_code=status.HTTP_204_NO_CONTENT)
-def auto_remove(body: AutoRemoveRequest, request: Request):
+@router.post("/auto_remove", status_code=status.HTTP_200_OK)
+async def auto_remove(body: AutoRemoveRequest, request: Request) -> dict[str, int]:
     service: AutoRemoveServicePort = request.app.state.auto_remove_service
     config = AutoRemoveConfig(overlap=body.overlap, character_range=body.character_range)
-    service.run(config, body.folder)
+    return await service.run(config, body.folder)

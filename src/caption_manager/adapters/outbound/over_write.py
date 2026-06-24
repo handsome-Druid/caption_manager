@@ -11,12 +11,10 @@ logger = getLogger(__name__)
 class OverWriteImpl:
 
     def __init__(self, semaphore: asyncio.Semaphore | int = 5):
-        if isinstance(semaphore, int):
-            self._semaphore_value = semaphore
-            self._provided_semaphore: asyncio.Semaphore | None = None
-        else:
-            self._semaphore_value = 0
-            self._provided_semaphore = semaphore
+        self._semaphore = (
+            semaphore if isinstance(semaphore, asyncio.Semaphore)
+            else asyncio.Semaphore(semaphore)
+        )
 
     async def _write_caption_file(self, caption_file: Path, captions: list[str], semaphore: asyncio.Semaphore):
         async with semaphore, aiofiles.open(caption_file, mode='w', encoding='utf-8') as f:
@@ -25,10 +23,9 @@ class OverWriteImpl:
 
     async def run(self, captions: Captions):
         tasks: list[asyncio.Task[None]] = []
-        semaphore = self._provided_semaphore or asyncio.Semaphore(self._semaphore_value)
         tasks.extend(
-            asyncio.create_task(self._write_caption_file(caption_file, captions, semaphore))
-            for caption_file, captions in captions.caption_dict.items()
+            asyncio.create_task(self._write_caption_file(caption_file, captions, self._semaphore))
+            for caption_file, captions in captions.file_dict.items()
         )
         results = await asyncio.gather(*tasks, return_exceptions=True)
         base_exceptions: list[BaseException] = []
@@ -44,4 +41,4 @@ class OverWriteImpl:
                     ...
         if base_exceptions:
             raise BaseExceptionGroup("Multiple exceptions occurred while overwriting caption files.", base_exceptions)
-        logger.info(f"Successfully overwritten {len(captions.caption_dict)} caption files.")
+        logger.info("Overwritten %d caption files.", len(captions.file_dict))

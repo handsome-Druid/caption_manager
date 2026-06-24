@@ -10,19 +10,18 @@ from caption_manager.domain.exceptions import NotDirectoryError
 
 logger = getLogger(__name__)
 
+IMAGE_SUFFIXES = frozenset({
+    ".png", ".jpg", ".jpeg", ".jfif", ".webp", ".bmp", ".gif", ".tif", ".tiff", ".avif",
+})
+
 class CaptionReaderImpl:
     _cache: dict[str, Captions] = {}
 
     def __init__(self, semaphore: asyncio.Semaphore | int = 5):
-        # 不要在此处创建 asyncio.Semaphore，因为它会在首次使用时绑定到当时的事件循环。
-        # 多次 asyncio.run() 会创建不同的事件循环，复用同一个信号量会触发
-        # "bound to a different event loop" 错误。改为记录并发上限，按需在运行的事件循环中创建。
-        if isinstance(semaphore, int):
-            self._semaphore_value = semaphore
-            self._provided_semaphore: asyncio.Semaphore | None = None
-        else:
-            self._semaphore_value = 0
-            self._provided_semaphore = semaphore
+        self._semaphore = (
+            semaphore if isinstance(semaphore, asyncio.Semaphore)
+            else asyncio.Semaphore(semaphore)
+        )
 
     def refresh(self):
         self._cache.clear()
@@ -43,14 +42,20 @@ class CaptionReaderImpl:
         )
         if not folder_path.is_dir():
             raise NotDirectoryError(f"{folder_path} is not a valid directory.")
-        
-        caption_files = list(folder_path.glob('*.txt'))
-        caption_dict: dict[Path, list[str]] = {}
-        caption_set: set[str] = set()
 
-        # 在当前运行的事件循环中创建信号量，避免跨事件循环复用导致的错误。
-        semaphore = self._provided_semaphore or asyncio.Semaphore(self._semaphore_value)
-        task_list = [self._read_file(caption_file, semaphore) for caption_file in caption_files]
+        # 递归展开所有子文件夹查找 txt，仅当同目录存在同名图片文件时才读取对应的 txt。
+        caption_files = [
+            txt_file
+            for txt_file in folder_path.rglob('*.txt')
+            if any(
+                txt_file.with_suffix(suffix).is_file()
+                for suffix in IMAGE_SUFFIXES
+            )
+        ]
+        file_dict: dict[Path, list[str]] = {}
+        caption_dict: dict[str, int] = {}
+
+        task_list = [self._read_file(caption_file, self._semaphore) for caption_file in caption_files]
         contents = await asyncio.gather(*task_list, return_exceptions=True)
         base_exceptions: list[BaseException] = []
         for caption_file, content in zip(caption_files, contents):
@@ -67,11 +72,13 @@ class CaptionReaderImpl:
                         for item in (s.strip() for s in content.replace('\n', ',').split(','))
                         if item
                     ]
-                    caption_set.update(cleaned_items)
-                    caption_dict[caption_file] = cleaned_items
+                    logger.debug("Read %s with %d captions.", caption_file, len(cleaned_items))
+                    for caption in cleaned_items:
+                        caption_dict[caption] = caption_dict.get(caption, 0) + 1
+                    file_dict[caption_file] = cleaned_items
         if base_exceptions:
             raise BaseExceptionGroup("Multiple exceptions occurred while reading caption files.", base_exceptions)
-
-        captions = Captions(caption_dict=caption_dict, caption_set=caption_set)
+        logger.info("Read %d caption files with a total of %d unique captions.", len(file_dict), len(caption_dict))
+        captions = Captions(file_dict=file_dict, caption_dict=caption_dict)
         self._cache[folder] = captions
         return captions

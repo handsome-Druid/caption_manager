@@ -1,4 +1,3 @@
-import asyncio
 from logging import getLogger
 
 from caption_manager.application.ports.outbound import (
@@ -40,9 +39,9 @@ class AutoRemoveService:
         self.character_tags.refresh()
         logger.debug("Refreshed character tags.")
 
-    def run(self, config: AutoRemoveConfig, folder: str):
+    async def run(self, config: AutoRemoveConfig, folder: str):
         self._refresh_all()
-        captions = asyncio.run(self.captions_reader.read_folder(folder))
+        captions = await self.captions_reader.read_folder(folder)
         blacklist_tags = self.blacklist_tags.read()
         BlacklistService.run(captions, blacklist_tags)
         if config.overlap:
@@ -51,4 +50,5 @@ class AutoRemoveService:
         character_tags = self.character_tags.read()
         for index in range(config.character_range):
             CharacterService.run(captions, character_tags, index)
-        asyncio.run(self.over_write.run(captions))
+        await self.over_write.run(captions)
+        return captions.caption_dict

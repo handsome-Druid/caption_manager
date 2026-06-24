@@ -11,7 +11,7 @@ class CustomRemoveRequest(BaseModel):
     custom_tags: list[str]
 
 
-@router.post("/custom_remove", status_code=status.HTTP_204_NO_CONTENT)
-def custom_remove(body: CustomRemoveRequest, request: Request):
+@router.post("/custom_remove", status_code=status.HTTP_200_OK)
+async def custom_remove(body: CustomRemoveRequest, request: Request) -> dict[str, int]:
     service: CustomRemoveServicePort = request.app.state.custom_remove_service
-    service.run(body.folder, body.custom_tags)
+    return await service.run(body.folder, body.custom_tags)

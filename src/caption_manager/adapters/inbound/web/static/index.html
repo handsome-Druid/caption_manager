@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Caption Manager</title>
+    <style>
+        :root {
+            --bg: #f5f6f8;
+            --card: #ffffff;
+            --border: #d9dce1;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --ok-bg: #ecfdf5;
+            --ok-fg: #047857;
+            --err-bg: #fef2f2;
+            --err-fg: #b91c1c;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+        }
+
+        header {
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 24px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        main {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 24px 16px 64px;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            margin: 0 0 14px;
+            font-size: 16px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 9px 11px;
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            font-size: 14px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .folder-input {
+            display: flex;
+            align-items: stretch;
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            overflow: hidden;
+        }
+
+        .folder-input:focus-within {
+            border-color: var(--primary);
+        }
+
+        .folder-prefix {
+            display: flex;
+            align-items: center;
+            padding: 0 11px;
+            background: #f0f1f4;
+            color: var(--muted);
+            font-size: 14px;
+            border-right: 1px solid var(--border);
+            white-space: nowrap;
+            user-select: none;
+        }
+
+        .folder-input input[type="text"] {
+            border: none;
+            border-radius: 0;
+            flex: 1;
+        }
+
+        .folder-input input[type="text"]:focus {
+            outline: none;
+        }
+
+        .row {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .row > div {
+            flex: 1;
+            min-width: 140px;
+        }
+
+        button {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 7px;
+            padding: 9px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+        }
+
+        button:disabled {
+            opacity: .55;
+            cursor: not-allowed;
+        }
+
+        button.secondary {
+            background: #fff;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+
+        button.secondary:hover {
+            background: #eff4ff;
+        }
+
+        .radio-group {
+            margin: 4px 0 2px;
+        }
+
+        .group-label {
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .radio-line {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin: 0;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text);
+        }
+
+        .radio-line + .radio-line {
+            margin-top: 8px;
+        }
+
+        .radio-line input {
+            width: auto;
+            margin-top: 3px;
+        }
+
+        .radio-line:has(input:checked) {
+            border-color: var(--primary);
+            background: #eff4ff;
+        }
+
+        .radio-line .title {
+            font-weight: 600;
+        }
+
+        .radio-line .desc {
+            display: block;
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+
+        .hint {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 6px;
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 14px;
+            max-height: 360px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .tags:empty {
+            display: none;
+        }
+
+        .tag {
+            background: #eef2ff;
+            color: #3730a3;
+            border-radius: 999px;
+            padding: 4px 12px;
+            font-size: 13px;
+            cursor: pointer;
+            user-select: none;
+            border: 1px solid transparent;
+            transition: background .15s, color .15s;
+        }
+
+        .tag:hover {
+            background: #e0e7ff;
+        }
+
+        .tag.selected {
+            background: #3730a3;
+            color: #fff;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+
+        .count {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        #toast {
+            position: fixed;
+            top: 18px;
+            right: 18px;
+            min-width: 260px;
+            max-width: 420px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
+            opacity: 0;
+            transform: translateY(-8px);
+            transition: opacity .2s, transform .2s;
+            pointer-events: none;
+            z-index: 50;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        #toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        #toast.ok {
+            background: var(--ok-bg);
+            color: var(--ok-fg);
+            border: 1px solid #a7f3d0;
+        }
+
+        #toast.err {
+            background: var(--err-bg);
+            color: var(--err-fg);
+            border: 1px solid #fecaca;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Caption Manager</h1>
+    </header>
+
+    <main>
+        <div class="card">
+            <label for="folder">数据集子文件夹 (folder)</label>
+            <div class="folder-input">
+                <span class="folder-prefix">dataset/</span>
+                <input type="text" id="folder" autocomplete="off" />
+            </div>
+            <div class="hint">留空时默认读取 dataset；填写 xxx 则读取 dataset/xxx。将递归遍历该文件夹下的所有子文件夹并打开其中的标签文件。</div>
+        </div>
+
+        <!-- 1. 查看 / 自定义移除标签 -->
+        <div class="card">
+            <h2>1. 查看与移除标签</h2>
+            <div class="toolbar">
+                <button id="btn-load">加载当前标签</button>
+                <span class="count" id="tag-count"></span>
+            </div>
+            <div id="tags" class="tags"></div>
+            <div class="toolbar" id="tag-actions" style="display:none;">
+                <span class="count" id="selected-count">已选 0 个</span>
+                <button class="secondary" id="btn-clear">清空选择</button>
+                <button id="btn-remove" disabled>一键移除选中标签</button>
+            </div>
+            <div class="hint">点击标签可切换选中（深色），点击「一键移除选中标签」执行移除。</div>
+        </div>
+
+        <!-- 2. 一键自动移除 -->
+        <div class="card">
+            <h2>2. 自动移除配置</h2>
+            <div class="group-label">重叠标签</div>
+            <div class="radio-group">
+                <label class="radio-line">
+                    <input type="checkbox" id="cfg-overlap" />
+                    <span>
+                        <span class="title">移除重叠标签 (overlap)</span>
+                        <span class="desc">移除被更具体标签覆盖的重叠 / 冗余标签。</span>
+                    </span>
+                </label>
+            </div>
+            <div class="group-label">角色标签处理强度 (character_range)</div>
+            <div class="radio-group">
+                <label class="radio-line">
+                    <input type="radio" name="character-range" value="0" checked />
+                    <span>
+                        <span class="title">0 · 保留角色标签</span>
+                        <span class="desc">仅移除黑名单标签。</span>
+                    </span>
+                </label>
+                <label class="radio-line">
+                    <input type="radio" name="character-range" value="1" />
+                    <span>
+                        <span class="title">1 · 移除人类标签</span>
+                        <span class="desc">移除人类相关角色标签。</span>
+                    </span>
+                </label>
+                <label class="radio-line">
+                    <input type="radio" name="character-range" value="2" />
+                    <span>
+                        <span class="title">2 · 移除人类 + 兽化标签</span>
+                        <span class="desc">在等级 1 基础上，再移除猫耳、尾巴等兽化标签。</span>
+                    </span>
+                </label>
+            </div>
+            <div class="toolbar">
+                <button id="btn-auto-remove">一键自动移除</button>
+            </div>
+        </div>
+
+        <!-- 3. 添加前缀标签 -->
+        <div class="card">
+            <h2>3. 添加前缀标签</h2>
+            <label for="prefix-input">前缀标签 (prefix)</label>
+            <input type="text" id="prefix-input" autocomplete="off" placeholder="多个标签用英文逗号分隔，如：1girl, solo" />
+            <div class="toolbar">
+                <button id="btn-add-prefix">添加到每个文件头部</button>
+            </div>
+            <div class="hint">将这些标签按顺序置于每个标签文件的最前面；若文件中已存在相同标签则会移动到头部，不会重复。</div>
+        </div>
+    </main>
+
+
+    <div id="toast"></div>
+
+    <script>
+        const $ = (id) => document.getElementById(id);
+
+        let toastTimer = null;
+        function toast(message, ok) {
+            const el = $("toast");
+            el.textContent = message;
+            el.className = "show " + (ok ? "ok" : "err");
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => { el.className = ""; }, 4500);
+        }
+
+        function getFolder() {
+            const input = $("folder").value.trim();
+            return input ? "dataset/" + input : "dataset";
+        }
+
+        // 统一处理响应：2xx 成功；否则读取 detail 显示
+        async function handleResponse(res, successMsg) {
+            if (res.ok) {
+                if (successMsg) toast(successMsg, true);
+                return true;
+            }
+            let detail = res.statusText || ("HTTP " + res.status);
+            try {
+                const data = await res.json();
+                if (data && data.detail) detail = data.detail;
+            } catch (err) {
+                console.debug("响应无 JSON body", err);
+            }
+            toast(detail, false);
+            return false;
+        }
+
+        function withBusy(btn, fn) {
+            return async (...args) => {
+                btn.disabled = true;
+                try {
+                    return await fn(...args);
+                } catch (err) {
+                    toast("请求失败：" + err.message, false);
+                } finally {
+                    btn.disabled = false;
+                }
+            };
+        }
+
+        // ---- 1. 查看 / 自定义移除标签 ----
+        const selected = new Set();
+
+        $("btn-load").onclick = withBusy($("btn-load"), async () => {
+            const folder = getFolder();
+            if (!folder) return;
+            const res = await fetch("/v1/check_captions?folder=" + encodeURIComponent(folder));
+            if (!(await handleResponse(res))) return;
+            const tags = await res.json();
+            renderTags(tags);
+            toast("加载成功，共 " + Object.keys(tags).length + " 个标签。", true);
+        });
+
+        function renderTags(tagCounts) {
+            selected.clear();
+            const entries = Object.entries(tagCounts).sort(
+                (a, b) => b[1] - a[1] || a[0].localeCompare(b[0])
+            );
+            $("tag-count").textContent = "共 " + entries.length + " 个标签";
+            const box = $("tags");
+            box.innerHTML = "";
+            entries.forEach(([t, count]) => {
+                const span = document.createElement("span");
+                span.className = "tag";
+                span.textContent = count > 1 ? `${t} (${count})` : t;
+                span.onclick = () => toggleTag(span, t);
+                box.appendChild(span);
+            });
+            $("tag-actions").style.display = entries.length ? "flex" : "none";
+            updateSelected();
+        }
+
+        function toggleTag(span, tag) {
+            if (selected.has(tag)) {
+                selected.delete(tag);
+                span.classList.remove("selected");
+            } else {
+                selected.add(tag);
+                span.classList.add("selected");
+            }
+            updateSelected();
+        }
+
+        function updateSelected() {
+            $("selected-count").textContent = "已选 " + selected.size + " 个";
+            $("btn-remove").disabled = selected.size === 0;
+        }
+
+        $("btn-clear").onclick = () => {
+            selected.clear();
+            document
+                .querySelectorAll("#tags .tag.selected")
+                .forEach((el) => el.classList.remove("selected"));
+            updateSelected();
+        };
+
+        $("btn-remove").onclick = withBusy($("btn-remove"), async () => {
+            const folder = getFolder();
+            if (!folder) return;
+            if (selected.size === 0) {
+                toast("请至少选择一个标签。", false);
+                return;
+            }
+            const customTags = Array.from(selected);
+            const res = await fetch("/v1/custom_remove", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ folder, custom_tags: customTags }),
+            });
+            if (!(await handleResponse(res, "已移除 " + customTags.length + " 个标签。"))) return;
+            // 直接用返回的 set 刷新标签列表，保持视图同步
+            renderTags(await res.json());
+        });
+
+        // ---- 2. 一键自动移除 ----
+        $("btn-auto-remove").onclick = withBusy($("btn-auto-remove"), async () => {
+            const folder = getFolder();
+            if (!folder) return;
+            const body = {
+                folder,
+                overlap: $("cfg-overlap").checked,
+                character_range: Number.parseInt(
+                    document.querySelector('input[name="character-range"]:checked').value,
+                    10
+                ) || 0,
+            };
+            const res = await fetch("/v1/auto_remove", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+            });
+            if (!(await handleResponse(res, "自动移除成功。"))) return;
+            // 直接用返回的 set 刷新标签列表，保持视图同步
+            renderTags(await res.json());
+        });
+
+        // ---- 3. 添加前缀标签 ----
+        $("btn-add-prefix").onclick = withBusy($("btn-add-prefix"), async () => {
+            const folder = getFolder();
+            if (!folder) return;
+            const prefixTags = $("prefix-input").value
+                .split(",")
+                .map((t) => t.trim())
+                .filter((t) => t);
+            if (prefixTags.length === 0) {
+                toast("请至少输入一个前缀标签。", false);
+                return;
+            }
+            const res = await fetch("/v1/add_prefix", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ folder, prefix: prefixTags }),
+            });
+            if (!(await handleResponse(res, "已添加 " + prefixTags.length + " 个前缀标签。"))) return;
+            // 直接用返回的 dict 刷新标签列表，保持视图同步
+            renderTags(await res.json());
+        });
+    </script>
+</body>
+
+</html>

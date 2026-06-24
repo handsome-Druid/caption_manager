@@ -11,16 +11,18 @@ class CustomService:
         removed_tags: set[str] = set()
         custom_set = set(custom_tags)
 
-        for key, caption_list in captions.caption_dict.items():
+        for key, caption_list in captions.file_dict.items():
             kept = [caption for caption in caption_list if caption not in custom_set]
             removed_in_key = [caption for caption in caption_list if caption in custom_set]
-            captions.caption_dict[key] = kept
+            captions.file_dict[key] = kept
             removed_tags.update(removed_in_key)
 
             if removed_in_key:
                 logger.debug(f"Removed {len(removed_in_key)} captions from '{key}' using custom tags.")
 
-        captions.caption_set.clear()
-        for caption_list in captions.caption_dict.values():
-            captions.caption_set.update(caption_list)
-        logger.info(f"Captions removed using custom tags: {removed_tags}")
+        captions.caption_dict.clear()
+        for caption_list in captions.file_dict.values():
+            for caption in caption_list:
+                captions.caption_dict[caption] = captions.caption_dict.get(caption, 0) + 1
+        logger.info(f"{len(removed_tags)} captions removed using custom tags")
+        logger.debug(f"Removed captions: {removed_tags}")
