@@ -1,8 +1,7 @@
 import asyncio
 from pathlib import Path
 from logging import getLogger
-
-import aiofiles
+from portalocker import LOCK_SH, Lock
 
 from caption_manager.domain.models import Captions
 from caption_manager.domain.exceptions import NotDirectoryError
@@ -22,10 +21,16 @@ class CaptionReaderImpl:
         )
 
     @staticmethod
-    async def _read_file(file_path: Path, semaphore: asyncio.Semaphore):
-        async with semaphore, aiofiles.open(file_path, mode='r', encoding='utf-8') as file:
-            content = await file.read()
+    def _locked_read(file_path: Path) -> str:
+        with Lock(file_path, "r", timeout=5, flags=LOCK_SH, encoding="utf-8") as f:
+            logger.debug("Locked file: %s", file_path)
+            content = f.read()
+        logger.debug("Unlocked file: %s", file_path)
         return content
+
+    async def _read_file(self, file_path: Path) -> str:
+        async with self._semaphore:
+            return await asyncio.to_thread(self._locked_read, file_path)
 
     async def read_folder(self, folder: FolderPath) -> Captions:
         if not folder.path.is_dir():
@@ -42,7 +47,7 @@ class CaptionReaderImpl:
         file_dict: dict[Path, list[str]] = {}
         caption_dict: dict[str, int] = {}
 
-        task_list = [self._read_file(caption_file, self._semaphore) for caption_file in caption_files]
+        task_list = [self._read_file(caption_file) for caption_file in caption_files]
         contents = await asyncio.gather(*task_list, return_exceptions=True)
         base_exceptions: list[BaseException] = []
         for caption_file, content in zip(caption_files, contents):

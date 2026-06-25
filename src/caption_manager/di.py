@@ -53,14 +53,14 @@ class FolderWeakValueDict(WeakValueDictionary[_KeyType, _ValueType], Generic[_Ke
         is_new = key not in self
 
         def _on_remove(ref_obj: object) -> None:
-            logger.debug(f"Unlocked folder: {getattr(key, 'path', key)}")
+            logger.debug("Unlocked folder: %s", getattr(key, 'path', key))
 
         ref_value = KeyedRef(value, _on_remove, key)
 
         self.data[key] = ref_value
 
         if is_new:
-            logger.debug(f"Locked folder: {getattr(key, 'path', key)}")
+            logger.debug("Locked folder: %s", getattr(key, 'path', key))
 
 
 @dataclass(frozen=True)
@@ -69,7 +69,7 @@ class AppConfig:
     blacklist_tags_file: str
     overlap_tags_file: str
     character_tags_file: str
-    semaphore_limit: int = 20
+    semaphore_limit: int = 8
 
 
 class AppProvider(Provider):

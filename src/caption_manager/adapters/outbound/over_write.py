@@ -1,7 +1,7 @@
 from logging import getLogger
 from pathlib import Path
+from portalocker import Lock
 
-import aiofiles
 import asyncio
 
 from caption_manager.domain.models import Captions
@@ -16,10 +16,18 @@ class OverWriteImpl:
             else asyncio.Semaphore(semaphore)
         )
 
-    async def _write_caption_file(self, caption_file: Path, captions: list[str], semaphore: asyncio.Semaphore):
-        async with semaphore, aiofiles.open(caption_file, mode='w', encoding='utf-8') as f:
-            await f.write(','.join(captions))
-        logger.debug(f"Overwritten {caption_file} with {len(captions)} captions.")
+    @staticmethod
+    def _locked_write(caption_file: Path, captions: list[str]) -> None:
+        with Lock(caption_file, "w", timeout=5, encoding="utf-8") as f:
+            logger.debug("Locked file with write mode: %s", caption_file)
+            f.write(','.join(captions))
+        logger.debug("Unlocked file with write mode: %s", caption_file)
+
+    @classmethod
+    async def _write_caption_file(cls, caption_file: Path, captions: list[str], semaphore: asyncio.Semaphore):
+        async with semaphore:
+            await asyncio.to_thread(cls._locked_write, caption_file, captions)
+        logger.debug("Overwritten %s with %d captions.", caption_file, len(captions))
 
     async def run(self, captions: Captions):
         tasks: list[asyncio.Task[None]] = []
