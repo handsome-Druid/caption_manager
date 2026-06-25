@@ -1,6 +1,11 @@
 import asyncio
+import sys
 from logging import INFO, DEBUG, StreamHandler, getLogger
+from pathlib import Path
 from socket import socket
+from typing import Generic, TypeVar
+from weakref import WeakValueDictionary, KeyedRef
+from collections.abc import Hashable
 
 import typer
 import uvicorn
@@ -24,7 +29,31 @@ from caption_manager.application.services import (
     CaptionReaderService,
     CustomRemoveService,
     AddPrefixService,
+    FolderResolverService,
 )
+
+
+_KeyType = TypeVar("_KeyType", bound=Hashable)
+_ValueType = TypeVar("_ValueType")
+
+
+class FolderWeakValueDict(WeakValueDictionary[_KeyType, _ValueType], Generic[_KeyType, _ValueType]):
+    def __init__(self) -> None:
+        super().__init__()
+        
+    def __setitem__(self, key: _KeyType, value: _ValueType) -> None:
+        is_new = key not in self
+        
+        def _on_remove(ref_obj: object) -> None:
+            logger.debug(f"Unlocked folder: {getattr(key, 'path', key)}")
+
+        ref_value = KeyedRef(value, _on_remove, key)
+        
+        self.data[key] = ref_value  # type: ignore[attr-defined]
+        
+        if is_new:
+            logger.debug(f"Locked folder: {getattr(key, 'path', key)}")
+
 
 def setup_logger(debug: bool = False):
     global logger
@@ -68,6 +97,16 @@ def create_app(
 
     semaphore = asyncio.Semaphore(20)
 
+    folder_lock: FolderWeakValueDict[Hashable, asyncio.Lock] = FolderWeakValueDict()
+
+    base_dir = (
+        Path(sys.argv[0]).resolve().parent
+        if "__compiled__" in globals() else
+        Path(__file__).resolve().parents[2]
+    )
+
+    folder_resolver = FolderResolverService(base_dir=base_dir)
+
     caption_reader = CaptionReaderImpl(semaphore=semaphore)
     over_write = OverWriteImpl(semaphore=semaphore)
     blacklist_tags = BlacklistTagsImpl(blacklist_tags_file)
@@ -80,25 +119,30 @@ def create_app(
         blacklist_tags=blacklist_tags,
         overlap_tags=overlap_tags,
         character_tags=character_tags,
+        lock=folder_lock,
     )
 
     caption_reader_service = CaptionReaderService(
         caption_reader=caption_reader,
+        lock=folder_lock,
     )
 
     custom_remove_service = CustomRemoveService(
         caption_reader=caption_reader,
         over_write=over_write,
+        lock=folder_lock,
     )
 
     add_prefix_service = AddPrefixService(
         caption_reader=caption_reader,
         over_write=over_write,
+        lock=folder_lock,
     )
 
     app = FastAPI(title="Caption Manager")
 
     app.state.debug = debug
+    app.state.folder_resolver = folder_resolver
     app.state.auto_remove_service = auto_remove_service
     app.state.caption_reader_service = caption_reader_service
     app.state.custom_remove_service = custom_remove_service

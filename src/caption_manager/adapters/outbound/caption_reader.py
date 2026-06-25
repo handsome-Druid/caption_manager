@@ -1,5 +1,4 @@
 import asyncio
-import sys
 from pathlib import Path
 from logging import getLogger
 
@@ -7,6 +6,7 @@ import aiofiles
 
 from caption_manager.domain.models import Captions
 from caption_manager.domain.exceptions import NotDirectoryError
+from caption_manager.application.dto import FolderPath
 
 logger = getLogger(__name__)
 
@@ -26,19 +26,14 @@ class CaptionReaderImpl:
             content = await file.read()
         return content
     
-    async def read_folder(self, folder: str):
-        folder_path = (
-            Path(sys.argv[0]).parent / Path(folder)
-            if "__compiled__" in globals() else
-            Path(__file__).parents[4] / Path(folder)
-        )
-        if not folder_path.is_dir():
-            raise NotDirectoryError(f"{folder_path} is not a valid directory.")
+    async def read_folder(self, folder: FolderPath):
+        if not folder.path.is_dir():
+            raise NotDirectoryError(f"{folder.path} is not a valid directory.")
 
         # 递归展开所有子文件夹查找 txt，仅当同目录存在同名图片文件时才读取对应的 txt。
         caption_files = [
             txt_file
-            for txt_file in folder_path.rglob('*.txt')
+            for txt_file in folder.path.rglob('*.txt')
             if any(
                 txt_file.with_suffix(suffix).is_file()
                 for suffix in IMAGE_SUFFIXES
