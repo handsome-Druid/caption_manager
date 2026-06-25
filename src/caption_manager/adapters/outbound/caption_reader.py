@@ -66,5 +66,4 @@ class CaptionReaderImpl:
         if base_exceptions:
             raise BaseExceptionGroup("Multiple exceptions occurred while reading caption files.", base_exceptions)
         logger.info("Read %d caption files with a total of %d unique captions.", len(file_dict), len(caption_dict))
-        captions = Captions(file_dict=file_dict, caption_dict=caption_dict)
-        return captions
+        return Captions(file_dict=file_dict, caption_dict=caption_dict)
