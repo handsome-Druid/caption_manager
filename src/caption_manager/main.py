@@ -38,6 +38,8 @@ _ValueType = TypeVar("_ValueType")
 
 
 class FolderWeakValueDict(WeakValueDictionary[_KeyType, _ValueType], Generic[_KeyType, _ValueType]):
+    data: dict[_KeyType, KeyedRef[_KeyType, _ValueType]]
+
     def __init__(self) -> None:
         super().__init__()
         
@@ -49,7 +51,7 @@ class FolderWeakValueDict(WeakValueDictionary[_KeyType, _ValueType], Generic[_Ke
 
         ref_value = KeyedRef(value, _on_remove, key)
         
-        self.data[key] = ref_value  # type: ignore[attr-defined]
+        self.data[key] = ref_value
         
         if is_new:
             logger.debug(f"Locked folder: {getattr(key, 'path', key)}")
