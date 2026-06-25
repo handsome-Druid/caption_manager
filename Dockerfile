@@ -13,10 +13,16 @@ ENV PYTHONUNBUFFERED=1
 RUN git clone https://github.com/handsome-Druid/caption_manager.git --depth 1
 WORKDIR /caption_manager
 
+RUN cp -r /caption_manager/filtering_tags /caption_manager_defaults/filtering_tags
+
 RUN uv sync --no-dev
+
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 EXPOSE 1357
 
 RUN cp .env.example .env
 
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["uv", "run", "--no-dev", "caption-manager"]
