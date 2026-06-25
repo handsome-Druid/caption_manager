@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Protocol
 
 from caption_manager.domain.models import Captions

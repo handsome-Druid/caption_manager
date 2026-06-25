@@ -1,0 +1,10 @@
+services:
+  caption-manager:
+    image: caption-manager:latest
+    ports:
+      - "1357:1357"
+    environment:
+      - CAPTION_MANAGER_HOST=0.0.0.0
+    volumes:
+      - ./dataset:/caption_manager/dataset
+      - ./filtering_tags:/caption_manager/filtering_tags

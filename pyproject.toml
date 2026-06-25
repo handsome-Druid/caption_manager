@@ -1,7 +1,7 @@
 [project]
 name = "caption-manager"
 version = "0.1.0"
-description = "Add your description here"
+description = "用于自动清洗和添加lora训练的角色标签"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [project.scripts]
-caption-manager = "caption_manager.main:main"
+caption-manager = "caption_manager.main:cli"
 
 [build-system]
 requires = ["hatchling"]

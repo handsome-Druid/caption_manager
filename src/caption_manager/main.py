@@ -96,10 +96,26 @@ cli = typer.Typer()
 def serve(
     host: str = typer.Option("127.0.0.1", envvar="CAPTION_MANAGER_HOST", help="Host to bind the server to."),
     port: int = typer.Option(1357, envvar="CAPTION_MANAGER_PORT", help="Port to bind the server to."),
-    blacklist_tags_file: str = typer.Option("blacklist_tags.txt", envvar="CAPTION_MANAGER_BLACKLIST_TAGS_FILE", help="Path to the blacklist tags file."),
-    overlap_tags_file: str = typer.Option("overlap_tags.json", envvar="CAPTION_MANAGER_OVERLAP_TAGS_FILE", help="Path to the overlap tags file."),
-    character_tags_file: str = typer.Option("character_tags.json", envvar="CAPTION_MANAGER_CHARACTER_TAGS_FILE", help="Path to the character tags file."),
-    debug: bool = typer.Option(False, envvar="CAPTION_MANAGER_DEBUG", help="Enable passing exceptions to the frontend."),
+    blacklist_tags_file: str = typer.Option(
+        "blacklist_tags.txt",
+        envvar="CAPTION_MANAGER_BLACKLIST_TAGS_FILE",
+        help="Path to the blacklist tags file."
+    ),
+    overlap_tags_file: str = typer.Option(
+        "overlap_tags.json",
+        envvar="CAPTION_MANAGER_OVERLAP_TAGS_FILE",
+        help="Path to the overlap tags file."
+    ),
+    character_tags_file: str = typer.Option(
+        "character_tags.json",
+        envvar="CAPTION_MANAGER_CHARACTER_TAGS_FILE",
+        help="Path to the character tags file."
+    ),
+    debug: bool = typer.Option(
+        False,
+        envvar="CAPTION_MANAGER_DEBUG",
+        help="Enable passing exceptions to the frontend."
+    ),
 ):
     setup_logger(debug=debug)
     logger.debug("Debug mode is enabled. Exceptions will be passed to the frontend.")

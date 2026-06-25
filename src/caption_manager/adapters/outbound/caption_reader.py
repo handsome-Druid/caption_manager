@@ -21,16 +21,16 @@ class CaptionReaderImpl:
             else asyncio.Semaphore(semaphore)
         )
 
-    async def _read_file(self, file_path: Path, semaphore: asyncio.Semaphore):
+    @staticmethod
+    async def _read_file(file_path: Path, semaphore: asyncio.Semaphore):
         async with semaphore, aiofiles.open(file_path, mode='r', encoding='utf-8') as file:
             content = await file.read()
         return content
-    
+
     async def read_folder(self, folder: FolderPath) -> Captions:
         if not folder.path.is_dir():
             raise NotDirectoryError(f"{folder.path} is not a valid directory.")
 
-        # 递归展开所有子文件夹查找 txt，仅当同目录存在同名图片文件时才读取对应的 txt。
         caption_files = [
             txt_file
             for txt_file in folder.path.rglob('*.txt')
