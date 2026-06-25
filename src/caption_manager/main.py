@@ -1,14 +1,14 @@
-import asyncio
 import sys
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from logging import INFO, DEBUG, StreamHandler, getLogger
 from pathlib import Path
 from socket import socket
-from typing import Generic, TypeVar
-from weakref import WeakValueDictionary, KeyedRef
-from collections.abc import Hashable
 
 import typer
 import uvicorn
+from dishka import make_async_container
+from dishka.integrations.fastapi import setup_dishka
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
@@ -17,44 +17,7 @@ from uvicorn.logging import DefaultFormatter
 
 from caption_manager.adapters.inbound.router import router as api_router
 from caption_manager.adapters.inbound.web import STATIC_DIR
-from caption_manager.adapters.outbound import (
-    BlacklistTagsImpl,
-    CaptionReaderImpl,
-    CharacterTagsImpl,
-    OverlapTagsImpl,
-    OverWriteImpl,
-)
-from caption_manager.application.services import (
-    AutoRemoveService, 
-    CaptionReaderService,
-    CustomRemoveService,
-    AddPrefixService,
-    FolderResolverService,
-)
-
-
-_KeyType = TypeVar("_KeyType", bound=Hashable)
-_ValueType = TypeVar("_ValueType")
-
-
-class FolderWeakValueDict(WeakValueDictionary[_KeyType, _ValueType], Generic[_KeyType, _ValueType]):
-    data: dict[_KeyType, KeyedRef[_KeyType, _ValueType]]
-
-    def __init__(self) -> None:
-        super().__init__()
-        
-    def __setitem__(self, key: _KeyType, value: _ValueType) -> None:
-        is_new = key not in self
-        
-        def _on_remove(ref_obj: object) -> None:
-            logger.debug(f"Unlocked folder: {getattr(key, 'path', key)}")
-
-        ref_value = KeyedRef(value, _on_remove, key)
-        
-        self.data[key] = ref_value
-        
-        if is_new:
-            logger.debug(f"Locked folder: {getattr(key, 'path', key)}")
+from caption_manager.di import AppConfig, AppProvider
 
 
 def setup_logger(debug: bool = False):
@@ -96,63 +59,35 @@ def create_app(
     character_tags_file: str,
     debug: bool,
 ):
-
-    semaphore = asyncio.Semaphore(20)
-
-    folder_lock: FolderWeakValueDict[Hashable, asyncio.Lock] = FolderWeakValueDict()
-
     base_dir = (
         Path(sys.argv[0]).resolve().parent
         if "__compiled__" in globals() else
         Path(__file__).resolve().parents[2]
     )
 
-    folder_resolver = FolderResolverService(base_dir=base_dir)
-
-    caption_reader = CaptionReaderImpl(semaphore=semaphore)
-    over_write = OverWriteImpl(semaphore=semaphore)
-    blacklist_tags = BlacklistTagsImpl(blacklist_tags_file)
-    overlap_tags = OverlapTagsImpl(overlap_tags_file)
-    character_tags = CharacterTagsImpl(character_tags_file)
-
-    auto_remove_service = AutoRemoveService(
-        caption_reader=caption_reader,
-        over_write=over_write,
-        blacklist_tags=blacklist_tags,
-        overlap_tags=overlap_tags,
-        character_tags=character_tags,
-        lock=folder_lock,
+    config = AppConfig(
+        base_dir=base_dir,
+        blacklist_tags_file=blacklist_tags_file,
+        overlap_tags_file=overlap_tags_file,
+        character_tags_file=character_tags_file,
     )
 
-    caption_reader_service = CaptionReaderService(
-        caption_reader=caption_reader,
-        lock=folder_lock,
-    )
+    container = make_async_container(AppProvider(), context={AppConfig: config})
 
-    custom_remove_service = CustomRemoveService(
-        caption_reader=caption_reader,
-        over_write=over_write,
-        lock=folder_lock,
-    )
+    @asynccontextmanager
+    async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        yield
+        await app.state.dishka_container.close()
 
-    add_prefix_service = AddPrefixService(
-        caption_reader=caption_reader,
-        over_write=over_write,
-        lock=folder_lock,
-    )
-
-    app = FastAPI(title="Caption Manager")
+    app = FastAPI(title="Caption Manager", lifespan=lifespan)
 
     app.state.debug = debug
-    app.state.folder_resolver = folder_resolver
-    app.state.auto_remove_service = auto_remove_service
-    app.state.caption_reader_service = caption_reader_service
-    app.state.custom_remove_service = custom_remove_service
-    app.state.add_prefix_service = add_prefix_service
-    
+
     app.add_exception_handler(Exception, _unhandled_exception_handler)
     app.include_router(api_router)
     app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="web")
+
+    setup_dishka(container, app)
     return app
 
 load_dotenv()

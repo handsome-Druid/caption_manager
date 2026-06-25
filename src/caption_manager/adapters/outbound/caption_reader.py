@@ -26,7 +26,7 @@ class CaptionReaderImpl:
             content = await file.read()
         return content
     
-    async def read_folder(self, folder: FolderPath):
+    async def read_folder(self, folder: FolderPath) -> Captions:
         if not folder.path.is_dir():
             raise NotDirectoryError(f"{folder.path} is not a valid directory.")
 

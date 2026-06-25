@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "aiofiles>=25.1.0",
+    "dishka>=1.10.1",
     "dotenv>=0.9.9",
     "fastapi>=0.138.0",
     "pydantic>=2.13.4",
