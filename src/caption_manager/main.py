@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from logging import INFO, DEBUG, StreamHandler, getLogger
 from pathlib import Path
 from socket import socket
+from importlib import metadata
 
 import typer
 import uvicorn
@@ -19,6 +20,7 @@ from caption_manager.adapters.inbound.router import router as api_router
 from caption_manager.adapters.inbound.web import STATIC_DIR
 from caption_manager.di import AppConfig, AppProvider
 
+METADATA = metadata.metadata(distribution_name="caption-manager")
 
 def setup_logger(debug: bool = False):
     global logger
@@ -79,7 +81,12 @@ def create_app(
         yield
         await app.state.dishka_container.close()
 
-    app = FastAPI(title="Caption Manager", lifespan=lifespan)
+    app = FastAPI(
+        title="Caption Manager",
+        description=METADATA["summary"],
+        version=METADATA["version"],
+        lifespan=lifespan
+    )
 
     app.state.debug = debug
 
@@ -91,7 +98,7 @@ def create_app(
     return app
 
 load_dotenv()
-cli = typer.Typer()
+cli = typer.Typer(help=METADATA["summary"], add_completion=False)
 @cli.command()
 def serve(
     host: str = typer.Option("127.0.0.1", envvar="CAPTION_MANAGER_HOST", help="Host to bind the server to."),
@@ -116,7 +123,17 @@ def serve(
         envvar="CAPTION_MANAGER_DEBUG",
         help="Enable passing exceptions to the frontend."
     ),
+    version: bool = typer.Option(
+        False,
+        "--version",
+        "-v",
+        help="Show the version of the application.",
+        is_eager=True,
+    )
 ):
+    if version:
+        typer.echo(message=f"{METADATA['name']} {METADATA['version']}")
+        raise typer.Exit()
     setup_logger(debug=debug)
     logger.debug("Debug mode is enabled. Exceptions will be passed to the frontend.")
     app = create_app(

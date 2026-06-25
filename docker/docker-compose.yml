@@ -1,0 +1,82 @@
+services:
+  anima-trainer:
+    build:
+      context: ./anima-trainer
+      dockerfile: Dockerfile
+    image: anima-trainer:latest
+    container_name: anima-trainer
+    ports:
+      - "13000:3000"
+      - "6006:6006"
+    volumes:
+      - ./anima-trainer/models:/workspace/models
+      - ./datasets:/datasets
+      - ./anima-trainer/jobs:/workspace/training-ui/jobs
+      - ./anima-trainer/config:/workspace/config
+      - ./anima-trainer/uploads:/workspace/training-ui/public/uploads
+      - ./anima-trainer/hf-cache:/root/.cache/huggingface
+    environment:
+      - TZ=Asia/Shanghai
+      - HF_HOME=/root/.cache/huggingface
+    networks:
+      - anima-net
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: always
+
+  caption-manager:
+    build:
+      context: ./caption-manager
+      dockerfile: Dockerfile
+    image: caption-manager:latest
+    container_name: caption-manager
+    ports:
+      - "1357:1357"
+    environment:
+      - TZ=Asia/Shanghai
+      - CAPTION_MANAGER_HOST=0.0.0.0
+    volumes:
+      - ./datasets:/caption-manager/dataset
+      - ./caption-manager/filtering_tags:/caption-manager/filtering_tags
+    networks:
+      - anima-net
+    restart: always
+
+  wd-llm-caption:
+    build:
+      context: ./wd-llm-caption-cli
+      dockerfile: Dockerfile
+    image: wd-llm-caption:latest
+    container_name: wd-llm-caption
+    ports:
+      - "8282:8282"
+    environment:
+      TZ: Asia/Shanghai
+      HF_TOKEN: ${HF_TOKEN:-}
+      HF_HOME: /workspace/cache/huggingface
+      TRANSFORMERS_CACHE: /workspace/cache/huggingface
+      MODELSCOPE_CACHE: /workspace/cache/modelscope
+    volumes:
+      - ./wd-llm-caption-cli/models:/workspace/wd-llm-caption-cli/models
+      - ./wd-llm-caption-cli/cache:/workspace/cache
+      - ./datasets:/datasets
+    networks:
+      - anima-net
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: always
+
+networks:
+  anima-net:
+    driver: bridge
+

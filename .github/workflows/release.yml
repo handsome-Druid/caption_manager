@@ -1,0 +1,78 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. 检出默认分支（master），需要完整历史以便机器人提交并推送版本号
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # 2. 从 tag 解析版本号（去掉前缀 v）
+      - name: Resolve version from tag
+        id: version
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Tag=${TAG} Version=${VERSION}"
+
+      # 3. 用 tag 版本替换 pyproject.toml 中的 version
+      - name: Bump version in pyproject.toml
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          sed -i -E "0,/^version = \".*\"/s//version = \"${VERSION}\"/" pyproject.toml
+          grep -E '^version = ' pyproject.toml
+
+      # 3b. 同步更新 caption-manager Dockerfile 拉取的 tag，使发布的镜像构建脚本指向本次版本
+      - name: Bump branch in caption-manager Dockerfile
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          sed -i -E "s#(--branch )\S+#\1${TAG}#" docker/caption-manager/Dockerfile
+          grep -E -- '--branch' docker/caption-manager/Dockerfile
+
+      # 3c. 同步更新 caption-manager NOTICE.md 中记录的构建版本
+      - name: Bump version in caption-manager NOTICE.md
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          sed -i -E "s#(- 构建版本：\`)[^\`]+(\`)#\1${TAG}\2#" docker/caption-manager/NOTICE.md
+          grep -E -- '- 构建版本：' docker/caption-manager/NOTICE.md
+
+      # 4. 由 github-actions 机器人提交并推送版本变更到 master
+      - name: Commit and push version bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- pyproject.toml docker/caption-manager/Dockerfile docker/caption-manager/NOTICE.md; then
+            echo "版本文件未变化，跳过提交。"
+          else
+            git add pyproject.toml docker/caption-manager/Dockerfile docker/caption-manager/NOTICE.md
+            git commit -m "chore: release ${{ steps.version.outputs.tag }}"
+            git push origin HEAD:master
+          fi
+
+      # 5. 打包 docker 文件夹
+      - name: Archive docker folder
+        run: zip -r docker.zip docker
+
+      # 6. 发布 Release 并附带 docker.zip
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.tag }}
+          files: docker.zip
+          generate_release_notes: true
