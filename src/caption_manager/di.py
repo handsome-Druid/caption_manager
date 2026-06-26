@@ -45,7 +45,7 @@ class AppConfig:
     blacklist_tags_file: str
     overlap_tags_file: str
     character_tags_file: str
-    semaphore_limit: int = 8
+    semaphore_limit: int = 4
 
 
 class AppProvider(Provider):
@@ -94,6 +94,7 @@ class AppProvider(Provider):
         overlap_tags: OverlapTagsPort,
         character_tags: CharacterTagsPort,
         lock: WeakValueDictionary[Hashable, asyncio.Lock],
+        semaphore: asyncio.Semaphore,
     ) -> AutoRemoveServicePort:
         return AutoRemoveService(
             caption_reader=caption_reader,
@@ -102,6 +103,7 @@ class AppProvider(Provider):
             overlap_tags=overlap_tags,
             character_tags=character_tags,
             lock=lock,
+            semaphore=semaphore,
         )
 
     @provide
@@ -118,11 +120,13 @@ class AppProvider(Provider):
         caption_reader: CaptionReaderPort,
         over_write: OverWritePort,
         lock: WeakValueDictionary[Hashable, asyncio.Lock],
+        semaphore: asyncio.Semaphore,
     ) -> CustomRemoveServicePort:
         return CustomRemoveService(
             caption_reader=caption_reader,
             over_write=over_write,
             lock=lock,
+            semaphore=semaphore,
         )
 
     @provide
@@ -131,9 +135,11 @@ class AppProvider(Provider):
         caption_reader: CaptionReaderPort,
         over_write: OverWritePort,
         lock: WeakValueDictionary[Hashable, asyncio.Lock],
+        semaphore: asyncio.Semaphore,
     ) -> AddPrefixServicePort:
         return AddPrefixService(
             caption_reader=caption_reader,
             over_write=over_write,
             lock=lock,
+            semaphore=semaphore,
         )

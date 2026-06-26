@@ -47,6 +47,7 @@ def create_app(
     overlap_tags_file: str,
     character_tags_file: str,
     debug: bool,
+    semaphore: int,
 ):
     base_dir = (
         Path(sys.argv[0]).resolve().parent
@@ -59,6 +60,7 @@ def create_app(
         blacklist_tags_file=blacklist_tags_file,
         overlap_tags_file=overlap_tags_file,
         character_tags_file=character_tags_file,
+        semaphore_limit=semaphore
     )
 
     container = make_async_container(AppProvider(), context={AppConfig: config})
@@ -116,7 +118,12 @@ def serve(
         "-v",
         help="Show the version of the application.",
         is_eager=True,
-    )
+    ),
+    semaphore: int = typer.Option(
+        4,
+        envvar="CAPTION_MANAGER_SEMAPHORE",
+        help="The maximum number of concurrent tasks for reading and writing caption files.",
+    ),
 ):
     if version:
         typer.echo(message=f"{METADATA['name']} {METADATA['version']}")
@@ -127,7 +134,8 @@ def serve(
         blacklist_tags_file=blacklist_tags_file,
         overlap_tags_file=overlap_tags_file,
         character_tags_file=character_tags_file,
-        debug=debug
+        debug=debug,
+        semaphore=semaphore
     )
     uvicorn.run(app, host=host, port=port)
 

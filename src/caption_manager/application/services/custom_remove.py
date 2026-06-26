@@ -19,16 +19,19 @@ class CustomRemoveService:
         caption_reader: CaptionReaderPort,
         over_write: OverWritePort,
         lock: WeakValueDictionary[Hashable, asyncio.Lock],
+        semaphore: asyncio.Semaphore,
     ):
         self.caption_reader = caption_reader
         self.over_write = over_write
         self._lock = lock
+        self._semaphore = semaphore
 
     async def run(self, folder: FolderPath, custom_tags: list[str]):
         if (lock := self._lock.get(folder)) is None:
             self._lock[folder] = lock = asyncio.Lock()
         async with lock:
             captions = await self.caption_reader.read_folder(folder)
-            await asyncio.to_thread(CustomService.run, captions, custom_tags)
+            async with self._semaphore:
+                await asyncio.to_thread(CustomService.run, captions, custom_tags)
             await self.over_write.run(captions)
         return captions.caption_dict

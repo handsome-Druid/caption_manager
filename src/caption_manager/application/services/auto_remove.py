@@ -25,7 +25,8 @@ class AutoRemoveService:
         blacklist_tags: BlacklistTagsPort,
         overlap_tags: OverlapTagsPort,
         character_tags: CharacterTagsPort,
-        lock: WeakValueDictionary[Hashable, asyncio.Lock]
+        lock: WeakValueDictionary[Hashable, asyncio.Lock],
+        semaphore: asyncio.Semaphore,
     ):
         self.captions_reader = caption_reader
         self.over_write = over_write
@@ -33,6 +34,7 @@ class AutoRemoveService:
         self.overlap_tags = overlap_tags
         self.character_tags = character_tags
         self._lock = lock
+        self._semaphore = semaphore
 
     async def run(self, config: AutoRemoveConfig, folder: FolderPath):
         if (lock := self._lock.get(folder)) is None:
@@ -49,7 +51,7 @@ class AutoRemoveService:
                 character_tags = self.character_tags.read()
                 for index in range(config.character_range):
                     CharacterService.run(captions, character_tags, index)
-
-            await asyncio.to_thread(process)
+            async with self._semaphore:
+                await asyncio.to_thread(process)
             await self.over_write.run(captions)
         return captions.caption_dict
