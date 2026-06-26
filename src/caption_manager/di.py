@@ -1,7 +1,6 @@
 import asyncio
 from collections.abc import Hashable
 from dataclasses import dataclass
-from logging import getLogger
 from pathlib import Path
 from weakref import WeakValueDictionary
 
@@ -36,10 +35,8 @@ from caption_manager.application.services import (
     FolderResolverService,
 )
 
-logger = getLogger("caption_manager")
 
-
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class AppConfig:
     base_dir: Path
     blacklist_tags_file: str
