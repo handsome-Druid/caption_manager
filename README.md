@@ -25,7 +25,13 @@ caption_manager ── 清洗标签：移除黑名单 / 重叠 / 角色标签，
 anima-trainer   ── 使用清洗后的数据集进行 LoRA 训练
 ```
 
-三个服务共享同一个 `datasets/` 目录，依次对其中的训练集进行处理。
+三个服务共享同一个 `datasets/` 目录，依次对其中的训练集进行处理。各服务 Web 界面端口：
+
+- `wd-llm-caption`：`8282`
+- `caption-manager`：`1357`
+- `anima-trainer`：`13000`
+
+各上游服务的具体使用方法请参阅对应仓库的自述文件：[wd-llm-caption-cli](https://github.com/fireicewolf/wd-llm-caption-cli) · [Anima-Standalone-Trainer](https://github.com/gazingstars123/Anima-Standalone-Trainer)。
 
 ### 标签文件约定
 
