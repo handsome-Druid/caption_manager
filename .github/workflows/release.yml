@@ -276,6 +276,28 @@ jobs:
           subject-digest: ${{ steps.build_wd_llm_caption.outputs.digest }}
           push-to-registry: true
 
+      # 5b. 为三个镜像生成 SBOM（SPDX JSON）
+      - name: Generate SBOM for caption-manager image
+        uses: anchore/sbom-action@v0
+        with:
+          image: ghcr.io/handsome-druid/caption_manager:${{ steps.version.outputs.version }}
+          format: spdx-json
+          output-file: sbom-caption-manager.spdx.json
+
+      - name: Generate SBOM for anima-trainer image
+        uses: anchore/sbom-action@v0
+        with:
+          image: ghcr.io/handsome-druid/anima-trainer:${{ steps.version.outputs.version }}
+          format: spdx-json
+          output-file: sbom-anima-trainer.spdx.json
+
+      - name: Generate SBOM for wd-llm-caption image
+        uses: anchore/sbom-action@v0
+        with:
+          image: ghcr.io/handsome-druid/wd-llm-caption:${{ steps.version.outputs.version }}
+          format: spdx-json
+          output-file: sbom-wd-llm-caption.spdx.json
+
       # 6. 打包 docker 文件夹
       - name: Archive docker folder
         run: zip -r docker.zip docker
@@ -292,5 +314,9 @@ jobs:
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: ${{ steps.version.outputs.tag }}
-          files: docker.zip
+          files: |
+            docker.zip
+            sbom-caption-manager.spdx.json
+            sbom-anima-trainer.spdx.json
+            sbom-wd-llm-caption.spdx.json
           generate_release_notes: true

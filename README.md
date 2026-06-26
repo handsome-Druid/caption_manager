@@ -10,7 +10,7 @@
 
 ## 工作流
 
-`caption_manager` 通常作为图像打标到 LoRA 训练之间的「标签清洗」环节，配合 `docker/docker-compose.yml` 中的另外两个服务组成完整流水线：
+`caption_manager` 作为图像打标到 LoRA 训练之间的「标签清洗」环节，配合 `docker/docker-compose.yml` 中的另外两个服务组成完整流水线：
 
 ```
 原始图片
@@ -31,8 +31,7 @@ anima-trainer   ── 使用清洗后的数据集进行 LoRA 训练
 
 - 工具只处理与图片**同名**的 `.txt` 标签文件（例如 `example.png` 对应 `example.txt`），没有对应图片的 `.txt` 会被忽略。
 - 标签以英文逗号分隔，处理后回写时同样以逗号分隔。
-- `.wdcaption` 为打标阶段的中间产物，不参与清洗。
-- **暂不支持清洗 LLM 生成的自然语言标签**，打标阶段请不要生成 `.llmcaption`。
+- **暂不支持清洗 LLM 生成的自然语言标签**，打标阶段请不要使用`llm`生成 `.llmcaption`。
 
 ### Web 界面操作步骤
 
@@ -60,64 +59,72 @@ anima-trainer   ── 使用清洗后的数据集进行 LoRA 训练
 
 ## Docker 部署
 
-### 方式一：完整流水线（推荐）
+`docker/docker-compose.yml` 一并编排 `anima-trainer`、`caption-manager`、`wd-llm-caption` 三个服务。默认使用固定版本镜像，便于按版本拉取、启动和回退；本地校验时，可直接重新构建对应服务。
 
-`docker/docker-compose.yml` 一并编排 `anima-trainer`、`caption-manager`、`wd-llm-caption` 三个服务，共享 `datasets/` 目录。
+### 1. 启动完整流水线
 
-```bash
-cd docker
-docker compose up -d caption-manager
-```
-
-如需启动完整流水线（需要 NVIDIA GPU 支持）：
+启动完整流水线：
 
 ```bash
 docker compose up -d
+```
+
+如果只想启动某个服务，也可以指定服务名：
+
+```bash
+docker compose up -d caption-manager
+```
+
+### 2. 单独构建某个镜像
+
+本地验证 Dockerfile、检查构建缓存或确认镜像未被篡改时，可只构建某个服务：
+
+```bash
+docker compose build caption-manager
+docker compose build anima-trainer
+docker compose build wd-llm-caption
+```
+
+跳过缓存、强制完整重建：
+
+```bash
+docker compose build --no-cache caption-manager
+```
+
+### 3. 单独运行某个服务
+
+构建或拉取完成后，可以单独启动某个服务：
+
+```bash
+docker compose up -d caption-manager
 ```
 
 `caption-manager` 服务说明：
 
 - 端口：`1357:1357`
 - 数据卷：
-  - `./datasets` → 数据集目录
-  - `./caption-manager/filtering_tags` → 过滤标签配置目录
-- 环境变量：`CAPTION_MANAGER_HOST=0.0.0.0`（容器内对外监听）
+   - `./datasets` → 数据集目录
+   - `./caption-manager/filtering_tags` → 过滤标签配置目录
 
-容器首次启动时，若挂载的 `filtering_tags` 目录为空，`docker-entrypoint.sh` 会自动从镜像内置的默认文件恢复。
+容器首次启动时，会自动从镜像内置的默认文件恢复`filtering_tags`。
 
-`caption-manager` 镜像在构建时从本仓库 `git clone` 拉取指定 tag 的源码，拉取版本见 [docker/caption-manager/NOTICE.md](docker/caption-manager/NOTICE.md)（该 tag 由发布工作流自动同步）。
-
-### 方式二：单独构建镜像
-
-```bash
-docker build -t caption-manager:latest -f docker/caption-manager/Dockerfile .
-
-docker run -d \
-  -p 1357:1357 \
-  -e CAPTION_MANAGER_HOST=0.0.0.0 \
-  -v "$(pwd)/datasets:/caption_manager/datasets" \
-  -v "$(pwd)/filtering_tags:/caption_manager/filtering_tags" \
-  caption-manager:latest
-```
+`caption-manager` 镜像对应的版本信息见 [docker/caption-manager/NOTICE.md](docker/caption-manager/NOTICE.md)。
 
 ---
 
 ## 本地运行
 
-依赖 [uv](https://docs.astral.sh/uv/) 与 Python ≥ 3.13。
+依赖 [uv](https://docs.astral.sh/uv/)。
 
 ```bash
-uv sync --no-dev
-uv run caption-manager
+uv run --no-dev caption-manager
 ```
 
-常用参数（也可通过环境变量配置，见下）：
+查看参数：
 
 ```bash
-uv run caption-manager --host 0.0.0.0 --port 1357 --debug
+uv run --no-dev caption-manager --help
 ```
-
-查看版本：`uv run caption-manager --version`。
 
 ---
 
@@ -140,17 +147,23 @@ uv run caption-manager --host 0.0.0.0 --port 1357 --debug
 
 ## 上游依赖仓库
 
-完整流水线中的另外两个服务并不包含上游源码，其代码在镜像构建时由对应 `Dockerfile` 通过 `git clone` 从下列仓库拉取：
+本项目使用的上游项目及第三方过滤标签数据来源如下，便于确认镜像和仓库所包含的第三方来源：
 
-| 服务 | 上游仓库 | 版本 | 许可证 |
-| --- | --- | --- | --- |
-| anima-trainer | [gazingstars123/Anima-Standalone-Trainer](https://github.com/gazingstars123/Anima-Standalone-Trainer) | `v2.2.0` | Apache-2.0 |
-| wd-llm-caption | [fireicewolf/wd-llm-caption-cli](https://github.com/fireicewolf/wd-llm-caption-cli) | `v0.1.4-alpha` | Apache-2.0 |
+| 上游仓库 | 版本 | 许可证 |
+| --- | --- | --- |
+| [gazingstars123/Anima-Standalone-Trainer](https://github.com/gazingstars123/Anima-Standalone-Trainer) | `v2.2.0` | Apache-2.0 |
+| [fireicewolf/wd-llm-caption-cli](https://github.com/fireicewolf/wd-llm-caption-cli) | `v0.1.4-alpha` | Apache-2.0 |
+| [cyber-meow/anime_screenshot_pipeline/configs/tag_filtering](https://github.com/cyber-meow/anime_screenshot_pipeline/tree/c9e3fb804c3847d136c2124a68c7af4b17ef3219/configs/tag_filtering) | `c9e3fb804c3847d136c2124a68c7af4b17ef3219` | MIT |
 
-> **构建或使用上述两个 Docker 服务（及其镜像），即视为你已知悉并同意对应上游仓库的许可证条款**；其中 wd-llm-caption 运行时从 ModelScope 拉取的各模型另有独立许可证，亦需自行遵守。详见各目录下的 NOTICE：[docker/anima-trainer/NOTICE.md](docker/anima-trainer/NOTICE.md)、[docker/wd-llm-caption-cli/NOTICE.md](docker/wd-llm-caption-cli/NOTICE.md)。
+补充说明：
+
+- `wd-llm-caption` 运行时从 ModelScope 拉取的各模型另有独立许可证，亦需自行遵守。
+- 第三方来源说明见 [docker/anima-trainer/NOTICE.md](docker/anima-trainer/NOTICE.md)、[docker/wd-llm-caption-cli/NOTICE.md](docker/wd-llm-caption-cli/NOTICE.md) 与 [filtering_tags/NOTICE.md](filtering_tags/NOTICE.md)。
 
 ---
 
 ## License
 
-详见 [LICENSE](LICENSE)。第三方过滤标签数据的许可信息见 [filtering_tags/NOTICE.md](filtering_tags/NOTICE.md) 与 [filtering_tags/THIRD_PARTY_LICENSE](filtering_tags/THIRD_PARTY_LICENSE)。
+本项目许可证见 [LICENSE](LICENSE)。
+
+第三方过滤标签数据的许可信息见 [filtering_tags/NOTICE.md](filtering_tags/NOTICE.md) 与 [filtering_tags/THIRD_PARTY_LICENSE](filtering_tags/THIRD_PARTY_LICENSE)。
