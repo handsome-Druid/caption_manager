@@ -48,7 +48,7 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://rsproxy.cn/rustup-init.sh | sh 
 ENV PATH="/root/.cargo/bin:$PATH"
 RUN printf '[source.crates-io]\nreplace-with = "rsproxy-sparse"\n[source.rsproxy-sparse]\nregistry = "sparse+https://rsproxy.cn/index/"\n[net]\ngit-fetch-with-cli = true\n' > /root/.cargo/config.toml
 
-RUN git clone --branch v0.1.0 https://github.com/handsome-Druid/caption_manager.git --depth 1
+RUN git clone --branch v0.2.0 https://github.com/handsome-Druid/caption_manager.git --depth 1
 WORKDIR /caption_manager
 
 RUN mkdir -p /caption_manager_defaults \
