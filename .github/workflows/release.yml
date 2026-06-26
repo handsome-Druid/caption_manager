@@ -62,13 +62,12 @@ jobs:
           sed -i -E "s#(- 构建版本：\`)[^\`]+(\`)#\1${TAG}\2#" docker/caption-manager/NOTICE.md
           grep -E -- '- 构建版本：' docker/caption-manager/NOTICE.md
 
-      # 3d. 同步更新 docker-compose 中三个服务镜像版本
+      # 3d. 同步更新 docker-compose 中 caption-manager 镜像版本
+      #     anima-trainer / wd-llm-caption 固定使用 latest（仅在 Dockerfile 变更时才会重建），故不再随版本号变动
       - name: Bump image tags in docker-compose.yml
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          sed -i -E "s#(^\s*image:\s*ghcr\.io/handsome-druid/anima-trainer:).*#\1${VERSION}#" docker/docker-compose.yml
           sed -i -E "s#(^\s*image:\s*ghcr\.io/handsome-druid/caption_manager:).*#\1${VERSION}#" docker/docker-compose.yml
-          sed -i -E "s#(^\s*image:\s*ghcr\.io/handsome-druid/wd-llm-caption:).*#\1${VERSION}#" docker/docker-compose.yml
           grep -E '^\s*image:\s*ghcr\.io/handsome-druid/' docker/docker-compose.yml
 
       # 3e. 重新生成 uv.lock，使锁文件里的项目版本与依赖解析跟随本次发布
@@ -214,6 +213,32 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # 5a. 检测 anima-trainer / wd-llm-caption 的 Dockerfile 相较上一个 tag 是否有改动
+      #     未改动则跳过对应镜像的构建，沿用 GHCR 上已有的 latest 镜像
+      - name: Detect Dockerfile changes since previous tag
+        id: changes
+        run: |
+          CURRENT_TAG="${{ steps.version.outputs.tag }}"
+          PREV_TAG="$(git tag --list 'v*' --sort=-v:refname | grep -vx "${CURRENT_TAG}" | head -n1)"
+          echo "上一个 tag: ${PREV_TAG:-<无>}"
+
+          check() {
+            name="$1"; path="$2"
+            if [ -z "$PREV_TAG" ]; then
+              echo "${name}=true" >> "$GITHUB_OUTPUT"
+              echo "${name}: 无上一个 tag，需要构建"
+            elif git diff --quiet "$PREV_TAG" -- "$path"; then
+              echo "${name}=false" >> "$GITHUB_OUTPUT"
+              echo "${name}: ${path} 相较 ${PREV_TAG} 未改动，跳过构建"
+            else
+              echo "${name}=true" >> "$GITHUB_OUTPUT"
+              echo "${name}: ${path} 相较 ${PREV_TAG} 有改动，需要构建"
+            fi
+          }
+
+          check anima_trainer docker/anima-trainer/Dockerfile
+          check wd_llm_caption docker/wd-llm-caption-cli/Dockerfile
+
       - name: Build and push caption-manager image
         id: build_caption_manager
         uses: docker/build-push-action@v6
@@ -233,6 +258,7 @@ jobs:
 
       - name: Build and push anima-trainer image
         id: build_anima_trainer
+        if: steps.changes.outputs.anima_trainer == 'true'
         uses: docker/build-push-action@v6
         with:
           context: docker/anima-trainer
@@ -250,6 +276,7 @@ jobs:
 
       - name: Build and push wd-llm-caption image
         id: build_wd_llm_caption
+        if: steps.changes.outputs.wd_llm_caption == 'true'
         uses: docker/build-push-action@v6
         with:
           context: docker/wd-llm-caption-cli
@@ -273,6 +300,7 @@ jobs:
           push-to-registry: true
 
       - name: Attest build provenance for anima-trainer image
+        if: steps.changes.outputs.anima_trainer == 'true'
         uses: actions/attest-build-provenance@v2
         with:
           subject-name: ghcr.io/handsome-druid/anima-trainer
@@ -280,6 +308,7 @@ jobs:
           push-to-registry: true
 
       - name: Attest build provenance for wd-llm-caption image
+        if: steps.changes.outputs.wd_llm_caption == 'true'
         uses: actions/attest-build-provenance@v2
         with:
           subject-name: ghcr.io/handsome-druid/wd-llm-caption
@@ -295,6 +324,7 @@ jobs:
           output-file: sbom-caption-manager.spdx.json
 
       - name: Generate SBOM for anima-trainer image
+        if: steps.changes.outputs.anima_trainer == 'true'
         uses: anchore/sbom-action@v0
         with:
           image: ghcr.io/handsome-druid/anima-trainer:${{ steps.version.outputs.version }}
@@ -302,6 +332,7 @@ jobs:
           output-file: sbom-anima-trainer.spdx.json
 
       - name: Generate SBOM for wd-llm-caption image
+        if: steps.changes.outputs.wd_llm_caption == 'true'
         uses: anchore/sbom-action@v0
         with:
           image: ghcr.io/handsome-druid/wd-llm-caption:${{ steps.version.outputs.version }}
@@ -318,6 +349,7 @@ jobs:
           push-to-registry: true
 
       - name: Attest SBOM for anima-trainer image
+        if: steps.changes.outputs.anima_trainer == 'true'
         uses: actions/attest-sbom@v2
         with:
           subject-name: ghcr.io/handsome-druid/anima-trainer
@@ -326,6 +358,7 @@ jobs:
           push-to-registry: true
 
       - name: Attest SBOM for wd-llm-caption image
+        if: steps.changes.outputs.wd_llm_caption == 'true'
         uses: actions/attest-sbom@v2
         with:
           subject-name: ghcr.io/handsome-druid/wd-llm-caption
