@@ -1,5 +1,7 @@
 # caption_manager
 
+[![Release](https://github.com/handsome-Druid/caption_manager/actions/workflows/release.yml/badge.svg)](https://github.com/handsome-Druid/caption_manager/actions/workflows/release.yml)
+
 用于 LoRA 训练数据集的标签（caption）清洗与管理工具：自动移除冗余 / 黑名单 / 角色标签，批量添加前缀标签，并提供 Web 界面进行可视化操作。
 
 基于 FastAPI 构建，前端为内置静态页面，默认监听 `1357` 端口。
