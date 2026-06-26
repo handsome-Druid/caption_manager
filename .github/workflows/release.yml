@@ -9,6 +9,7 @@ permissions:
   contents: write
   attestations: write
   id-token: write
+  packages: write
 
 jobs:
   release:
@@ -61,6 +62,15 @@ jobs:
           sed -i -E "s#(- 构建版本：\`)[^\`]+(\`)#\1${TAG}\2#" docker/caption-manager/NOTICE.md
           grep -E -- '- 构建版本：' docker/caption-manager/NOTICE.md
 
+      # 3d. 同步更新 docker-compose 中三个服务镜像版本
+      - name: Bump image tags in docker-compose.yml
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          sed -i -E "s#(^\s*image:\s*ghcr\.io/handsome-druid/anima-trainer:).*#\1${VERSION}#" docker/docker-compose.yml
+          sed -i -E "s#(^\s*image:\s*ghcr\.io/handsome-druid/caption_manager:).*#\1${VERSION}#" docker/docker-compose.yml
+          sed -i -E "s#(^\s*image:\s*ghcr\.io/handsome-druid/wd-llm-caption:).*#\1${VERSION}#" docker/docker-compose.yml
+          grep -E '^\s*image:\s*ghcr\.io/handsome-druid/' docker/docker-compose.yml
+
       # 4. 通过 GitHub API 在服务端提交版本变更到 master
       - name: Commit version bump via GitHub API
         id: commit
@@ -76,6 +86,7 @@ jobs:
               "pyproject.toml",
               "docker/caption-manager/Dockerfile",
               "docker/caption-manager/NOTICE.md",
+              "docker/docker-compose.yml",
             ];
 
             const owner = context.repo.owner;
@@ -182,17 +193,100 @@ jobs:
               core.info(`Created tag ${tag} -> ${commitOid}`);
             }
 
-      # 5. 打包 docker 文件夹
+      # 5. 构建并上传三个 Docker 镜像到 GHCR
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push caption-manager image
+        id: build_caption_manager
+        uses: docker/build-push-action@v6
+        with:
+          context: docker/caption-manager
+          file: docker/caption-manager/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/handsome-druid/caption_manager:${{ steps.version.outputs.version }}
+            ghcr.io/handsome-druid/caption_manager:latest
+          cache-from: |
+            type=gha,scope=shared-cuda-base
+            type=gha,scope=caption-manager
+          cache-to: |
+            type=gha,mode=max,scope=shared-cuda-base
+            type=gha,mode=max,scope=caption-manager
+
+      - name: Build and push anima-trainer image
+        id: build_anima_trainer
+        uses: docker/build-push-action@v6
+        with:
+          context: docker/anima-trainer
+          file: docker/anima-trainer/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/handsome-druid/anima-trainer:${{ steps.version.outputs.version }}
+            ghcr.io/handsome-druid/anima-trainer:latest
+          cache-from: |
+            type=gha,scope=shared-cuda-base
+            type=gha,scope=anima-trainer
+          cache-to: |
+            type=gha,mode=max,scope=shared-cuda-base
+            type=gha,mode=max,scope=anima-trainer
+
+      - name: Build and push wd-llm-caption image
+        id: build_wd_llm_caption
+        uses: docker/build-push-action@v6
+        with:
+          context: docker/wd-llm-caption-cli
+          file: docker/wd-llm-caption-cli/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/handsome-druid/wd-llm-caption:${{ steps.version.outputs.version }}
+            ghcr.io/handsome-druid/wd-llm-caption:latest
+          cache-from: |
+            type=gha,scope=shared-cuda-base
+            type=gha,scope=wd-llm-caption
+          cache-to: |
+            type=gha,mode=max,scope=shared-cuda-base
+            type=gha,mode=max,scope=wd-llm-caption
+
+      - name: Attest build provenance for caption-manager image
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ghcr.io/handsome-druid/caption_manager
+          subject-digest: ${{ steps.build_caption_manager.outputs.digest }}
+          push-to-registry: true
+
+      - name: Attest build provenance for anima-trainer image
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ghcr.io/handsome-druid/anima-trainer
+          subject-digest: ${{ steps.build_anima_trainer.outputs.digest }}
+          push-to-registry: true
+
+      - name: Attest build provenance for wd-llm-caption image
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ghcr.io/handsome-druid/wd-llm-caption
+          subject-digest: ${{ steps.build_wd_llm_caption.outputs.digest }}
+          push-to-registry: true
+
+      # 6. 打包 docker 文件夹
       - name: Archive docker folder
         run: zip -r docker.zip docker
 
-      # 5b. 为发布资产生成 build provenance attestation
+      # 6b. 为发布资产生成 build provenance attestation
       - name: Attest build provenance for docker.zip
         uses: actions/attest-build-provenance@v2
         with:
           subject-path: docker.zip
 
-      # 6. 发布 Release 并附带 docker.zip
+      # 7. 发布 Release 并附带 docker.zip
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
