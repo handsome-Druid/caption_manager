@@ -6,7 +6,6 @@
 # ============================================================================
 FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04
 
-ENV TZ=Asia/Shanghai
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN sed -i -E 's/http:\/\/(archive|security).ubuntu.com/http:\/\/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list
@@ -21,10 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip \
     build-essential \
     libcurl4 \
-    tzdata \
     && rm -rf /var/lib/apt/lists/*
-
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 RUN ln -sf /usr/bin/python3.10 /usr/bin/python3 && \
     ln -sf /usr/bin/python3.10 /usr/bin/python
@@ -33,12 +29,11 @@ RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 # ============================ 共用基础层结束 ============================
 
 # ---- wd-llm-caption 专属部分 ----
-WORKDIR /workspace
+WORKDIR /wd-llm-caption-cli
 
 RUN pip install -U pip setuptools wheel
 
-RUN git clone --branch v0.1.4-alpha --depth 1 https://github.com/fireicewolf/wd-llm-caption-cli.git /workspace/wd-llm-caption-cli
-WORKDIR /workspace/wd-llm-caption-cli
+RUN git clone --branch v0.1.4-alpha --depth 1 https://github.com/fireicewolf/wd-llm-caption-cli.git .
 
 # 安装 PyTorch（CUDA 12.4）
 RUN pip install torch==2.5.0 torchvision --index-url https://download.pytorch.org/whl/cu124

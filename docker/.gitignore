@@ -4,6 +4,10 @@
 !anima-trainer/
 !anima-trainer/Dockerfile
 !anima-trainer/NOTICE.md
+!anima-trainer/config/
+!anima-trainer/config/**
+!anima-trainer/jobs/
+!anima-trainer/jobs/**
 
 !caption-manager/
 !caption-manager/Dockerfile

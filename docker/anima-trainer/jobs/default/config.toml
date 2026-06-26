@@ -1,0 +1,69 @@
+gpu_ids = "0"
+
+[training_arguments]
+output_name = "default"
+save_model_as = "safetensors"
+max_train_steps = 10_000
+save_every_n_steps = 250
+sample_every_n_steps = 100
+log_with = "tensorboard"
+learning_rate = 0.00002
+text_encoder_lr = 0.00005
+optimizer_type = "AdamW"
+optimizer_args = [ "weight_decay=0.01" ]
+lr_scheduler = "cosine"
+lr_warmup_steps = 0
+mixed_precision = "bf16"
+save_precision = "bf16"
+max_data_loader_n_workers = 4
+gradient_accumulation_steps = 1
+max_grad_norm = 1
+gradient_checkpointing = true
+flash_attn = false
+torch_compile = false
+lowram = false
+blocks_to_swap = 0
+persistent_data_loader_workers = true
+seed = 42
+cache_latents_to_disk = true
+vae_batch_size = 1
+cache_text_encoder_outputs_to_disk = true
+multigpu_mode = "ddp"
+deepspeed = false
+use_cuda_direct = false
+ddp_gradient_as_bucket_view = false
+ddp_static_graph = false
+use_fsdp = false
+fsdp_sharding_strategy = "1"
+fsdp_offload_params = false
+fsdp_reshard_after_forward = false
+fsdp_activation_checkpointing = false
+fsdp_cpu_ram_efficient_loading = false
+fsdp_backward_prefetch = ""
+fsdp_forward_prefetch = false
+fsdp_use_orig_params = true
+fsdp_limit_all_gathers = true
+fsdp_auto_wrap_policy = "NO_WRAP"
+fsdp_min_num_params = 100_000_000
+fsdp_transformer_layer_cls_to_wrap = ""
+fsdp2_reshard_after_forward = true
+fsdp2_offload_params = false
+fsdp2_activation_checkpointing = false
+fsdp2_cpu_ram_efficient_loading = false
+fsdp2_auto_wrap_policy = "NO_WRAP"
+fsdp2_min_num_params = 100_000_000
+fsdp2_transformer_layer_cls_to_wrap = ""
+step_profile = false
+profile_microbatch = false
+
+[network_arguments]
+network_module = "networks.lora_anima"
+network_dim = 32
+network_alpha = 32
+network_train_unet_only = true
+auto_resume_last_state = false
+
+[anima_arguments]
+timestep_sample_method = "logit_normal"
+discrete_flow_shift = 3
+weighting_scheme = "logit_normal"

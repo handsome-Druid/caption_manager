@@ -9,14 +9,13 @@ services:
       - "13000:3000"
       - "6006:6006"
     volumes:
-      - ./anima-trainer/models:/workspace/models
+      - ./anima-trainer/models:/anima-trainer/models
       - ./datasets:/datasets
-      - ./anima-trainer/jobs:/workspace/training-ui/jobs
-      - ./anima-trainer/config:/workspace/config
-      - ./anima-trainer/uploads:/workspace/training-ui/public/uploads
+      - ./anima-trainer/jobs:/anima-trainer/training-ui/jobs
+      - ./anima-trainer/config:/anima-trainer/config
       - ./anima-trainer/hf-cache:/root/.cache/huggingface
+      - /etc/localtime:/etc/localtime:ro
     environment:
-      - TZ=Asia/Shanghai
       - HF_HOME=/root/.cache/huggingface
     networks:
       - anima-net
@@ -38,11 +37,11 @@ services:
     ports:
       - "1357:1357"
     environment:
-      - TZ=Asia/Shanghai
       - CAPTION_MANAGER_HOST=0.0.0.0
     volumes:
       - ./datasets:/caption_manager/datasets
       - ./caption-manager/filtering_tags:/caption_manager/filtering_tags
+      - /etc/localtime:/etc/localtime:ro
     networks:
       - anima-net
     restart: unless-stopped
@@ -56,15 +55,15 @@ services:
     ports:
       - "8282:8282"
     environment:
-      TZ: Asia/Shanghai
       HF_TOKEN: ${HF_TOKEN:-}
-      HF_HOME: /workspace/cache/huggingface
-      TRANSFORMERS_CACHE: /workspace/cache/huggingface
-      MODELSCOPE_CACHE: /workspace/cache/modelscope
+      HF_HOME: /wd-llm-caption-cli/cache/huggingface
+      TRANSFORMERS_CACHE: /wd-llm-caption-cli/cache/huggingface
+      MODELSCOPE_CACHE: /wd-llm-caption-cli/cache/modelscope
     volumes:
-      - ./wd-llm-caption-cli/models:/workspace/wd-llm-caption-cli/models
-      - ./wd-llm-caption-cli/cache:/workspace/cache
+      - ./wd-llm-caption-cli/models:/wd-llm-caption-cli/models
+      - ./wd-llm-caption-cli/cache:/wd-llm-caption-cli/cache
       - ./datasets:/datasets
+      - /etc/localtime:/etc/localtime:ro
     networks:
       - anima-net
     deploy:

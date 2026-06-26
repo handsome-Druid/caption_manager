@@ -1,0 +1,17 @@
+venv_path = "/anima-trainer/venv"
+
+[model_paths]
+dit_path = "/anima-trainer/models/anima-base-v1.0.safetensors"
+qwen3_path = "/anima-trainer/models/qwen_3_06b_base.safetensors"
+vae_path = "/anima-trainer/models/qwen_image_vae.safetensors"
+lumina_dit_path = ""
+gemma2_path = ""
+lumina_vae_path = ""
+
+[ui]
+theme = "github-dark"
+background_position = "50.0% 50.0%"
+dim_level = 70
+brightness_level = 100
+blur_level = 10
+text_shadow_size = 0

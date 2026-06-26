@@ -1,0 +1,22 @@
+[general]
+enable_bucket = true
+bucket_no_upscale = true
+min_bucket_reso = 1_024
+max_bucket_reso = 1_536
+bucket_reso_steps = 64
+
+[[datasets]]
+resolution = [ 1_536, 1_536 ]
+batch_size = 2
+caption_extension = ".txt"
+
+  [[datasets.subsets]]
+  image_dir = "/datasets"
+  num_repeats = 1
+  keep_tokens = 1
+  flip_aug = false
+  caption_prefix = ""
+  caption_dropout_rate = 0.05
+  caption_tag_dropout_rate = 0
+  caption_dropout_every_n_epochs = 0
+  shuffle_caption = false
