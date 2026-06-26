@@ -51,8 +51,8 @@ def create_app(
 ):
     base_dir = (
         Path(sys.argv[0]).resolve().parent
-        if "__compiled__" in globals() else
-        Path(__file__).resolve().parents[2]
+        if "__compiled__" in globals()
+        else Path(__file__).resolve().parents[2]
     )
 
     config = AppConfig(
