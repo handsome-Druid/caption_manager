@@ -27,7 +27,7 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
-    restart: always
+    restart: unless-stopped
 
   caption-manager:
     build:
@@ -45,7 +45,7 @@ services:
       - ./caption-manager/filtering_tags:/caption_manager/filtering_tags
     networks:
       - anima-net
-    restart: always
+    restart: unless-stopped
 
   wd-llm-caption:
     build:
@@ -74,7 +74,7 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
-    restart: always
+    restart: unless-stopped
 
 networks:
   anima-net:
