@@ -71,6 +71,15 @@ jobs:
           sed -i -E "s#(^\s*image:\s*ghcr\.io/handsome-druid/wd-llm-caption:).*#\1${VERSION}#" docker/docker-compose.yml
           grep -E '^\s*image:\s*ghcr\.io/handsome-druid/' docker/docker-compose.yml
 
+      # 3e. 重新生成 uv.lock，使锁文件里的项目版本与依赖解析跟随本次发布
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Update uv.lock
+        run: |
+          uv lock
+          grep -E '^version = ' uv.lock | head -n1
+
       # 4. 通过 GitHub API 在服务端提交版本变更到 master
       - name: Commit version bump via GitHub API
         id: commit
@@ -84,6 +93,7 @@ jobs:
             const branchName = "master";
             const files = [
               "pyproject.toml",
+              "uv.lock",
               "docker/caption-manager/Dockerfile",
               "docker/caption-manager/NOTICE.md",
               "docker/docker-compose.yml",
@@ -298,6 +308,31 @@ jobs:
           format: spdx-json
           output-file: sbom-wd-llm-caption.spdx.json
 
+      # 5c. 将 SBOM 作为 attestation 绑定到各镜像 digest 并推送到 registry
+      - name: Attest SBOM for caption-manager image
+        uses: actions/attest-sbom@v2
+        with:
+          subject-name: ghcr.io/handsome-druid/caption_manager
+          subject-digest: ${{ steps.build_caption_manager.outputs.digest }}
+          sbom-path: sbom-caption-manager.spdx.json
+          push-to-registry: true
+
+      - name: Attest SBOM for anima-trainer image
+        uses: actions/attest-sbom@v2
+        with:
+          subject-name: ghcr.io/handsome-druid/anima-trainer
+          subject-digest: ${{ steps.build_anima_trainer.outputs.digest }}
+          sbom-path: sbom-anima-trainer.spdx.json
+          push-to-registry: true
+
+      - name: Attest SBOM for wd-llm-caption image
+        uses: actions/attest-sbom@v2
+        with:
+          subject-name: ghcr.io/handsome-druid/wd-llm-caption
+          subject-digest: ${{ steps.build_wd_llm_caption.outputs.digest }}
+          sbom-path: sbom-wd-llm-caption.spdx.json
+          push-to-registry: true
+
       # 6. 打包 docker 文件夹
       - name: Archive docker folder
         run: zip -r docker.zip docker
@@ -316,7 +351,4 @@ jobs:
           name: ${{ steps.version.outputs.tag }}
           files: |
             docker.zip
-            sbom-caption-manager.spdx.json
-            sbom-anima-trainer.spdx.json
-            sbom-wd-llm-caption.spdx.json
           generate_release_notes: true
