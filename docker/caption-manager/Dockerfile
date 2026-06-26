@@ -41,21 +41,11 @@ ENV PYTHONUNBUFFERED=1
 ENV UV_PYTHON=3.13t
 ENV PYTHON_GIL=0
 
-# Rust 用于编译 pydantic-core（free-threading 下无预编译 wheel），走 rsproxy 国内镜像
-ENV RUSTUP_DIST_SERVER=https://rsproxy.cn
-ENV RUSTUP_UPDATE_ROOT=https://rsproxy.cn/rustup
-RUN curl --proto '=https' --tlsv1.2 -sSf https://rsproxy.cn/rustup-init.sh | sh -s -- -y --profile minimal --default-toolchain stable
-ENV PATH="/root/.cargo/bin:$PATH"
-RUN printf '[source.crates-io]\nreplace-with = "rsproxy-sparse"\n[source.rsproxy-sparse]\nregistry = "sparse+https://rsproxy.cn/index/"\n[net]\ngit-fetch-with-cli = true\n' > /root/.cargo/config.toml
-
 RUN git clone --branch v0.2.0 https://github.com/handsome-Druid/caption_manager.git --depth 1
 WORKDIR /caption_manager
 
 RUN mkdir -p /caption_manager_defaults \
     && cp -r /caption_manager/filtering_tags /caption_manager_defaults/filtering_tags
-
-# free-threading 下弃用 uvloop/httptools，改纯 asyncio+h11
-RUN sed -i 's/uvicorn\[standard\]/uvicorn/' pyproject.toml && rm -f uv.lock
 
 RUN uv sync --no-dev
 

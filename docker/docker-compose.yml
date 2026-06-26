@@ -41,8 +41,8 @@ services:
       - TZ=Asia/Shanghai
       - CAPTION_MANAGER_HOST=0.0.0.0
     volumes:
-      - ./datasets:/caption-manager/dataset
-      - ./caption-manager/filtering_tags:/caption-manager/filtering_tags
+      - ./datasets:/caption_manager/datasets
+      - ./caption-manager/filtering_tags:/caption_manager/filtering_tags
     networks:
       - anima-net
     restart: always

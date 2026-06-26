@@ -1,0 +1,16 @@
+*
+!/.gitignore
+
+!anima-trainer/
+!anima-trainer/Dockerfile
+!anima-trainer/NOTICE.md
+
+!caption-manager/
+!caption-manager/Dockerfile
+!caption-manager/NOTICE.md
+
+!docker-compose.yml
+
+!wd-llm-caption-cli/
+!wd-llm-caption-cli/Dockerfile
+!wd-llm-caption-cli/NOTICE.md
