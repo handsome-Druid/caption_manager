@@ -228,8 +228,8 @@ jobs:
             type=gha,scope=shared-cuda-base
             type=gha,scope=caption-manager
           cache-to: |
-            type=gha,mode=max,scope=shared-cuda-base
-            type=gha,mode=max,scope=caption-manager
+            type=gha,mode=min,scope=shared-cuda-base
+            type=gha,mode=min,scope=caption-manager
 
       - name: Build and push anima-trainer image
         id: build_anima_trainer
@@ -245,8 +245,8 @@ jobs:
             type=gha,scope=shared-cuda-base
             type=gha,scope=anima-trainer
           cache-to: |
-            type=gha,mode=max,scope=shared-cuda-base
-            type=gha,mode=max,scope=anima-trainer
+            type=gha,mode=min,scope=shared-cuda-base
+            type=gha,mode=min,scope=anima-trainer
 
       - name: Build and push wd-llm-caption image
         id: build_wd_llm_caption
@@ -262,8 +262,8 @@ jobs:
             type=gha,scope=shared-cuda-base
             type=gha,scope=wd-llm-caption
           cache-to: |
-            type=gha,mode=max,scope=shared-cuda-base
-            type=gha,mode=max,scope=wd-llm-caption
+            type=gha,mode=min,scope=shared-cuda-base
+            type=gha,mode=min,scope=wd-llm-caption
 
       - name: Attest build provenance for caption-manager image
         uses: actions/attest-build-provenance@v2
