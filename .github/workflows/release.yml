@@ -97,7 +97,8 @@ jobs:
 
               const remoteContent = Buffer.from(remoteFile.content, remoteFile.encoding).toString("utf8");
               if (remoteContent !== localContent) {
-                additions.push({ path, contents: localContent });
+                const contents = Buffer.from(localContent, "utf8").toString("base64");
+                additions.push({ path, contents });
               }
             }
 
