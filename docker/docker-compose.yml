@@ -3,7 +3,7 @@ services:
     build:
       context: ./anima-trainer
       dockerfile: Dockerfile
-    image: ghcr.io/handsome-druid/anima-trainer:0.3.2
+    image: ghcr.io/handsome-druid/anima-trainer:0.3.3
     container_name: anima-trainer
     ports:
       - "13000:3000"
@@ -32,7 +32,7 @@ services:
     build:
       context: ./caption-manager
       dockerfile: Dockerfile
-    image: ghcr.io/handsome-druid/caption_manager:0.3.2
+    image: ghcr.io/handsome-druid/caption_manager:0.3.3
     container_name: caption-manager
     ports:
       - "1357:1357"
@@ -50,7 +50,7 @@ services:
     build:
       context: ./wd-llm-caption-cli
       dockerfile: Dockerfile
-    image: ghcr.io/handsome-druid/wd-llm-caption:0.3.2
+    image: ghcr.io/handsome-druid/wd-llm-caption:0.3.3
     container_name: wd-llm-caption
     ports:
       - "8282:8282"
