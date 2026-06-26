@@ -3,8 +3,7 @@ from collections.abc import Hashable
 from dataclasses import dataclass
 from logging import getLogger
 from pathlib import Path
-from typing import Generic, TypeVar
-from weakref import KeyedRef, WeakValueDictionary
+from weakref import WeakValueDictionary
 
 from dishka import Provider, Scope, from_context, provide
 
@@ -39,29 +38,6 @@ from caption_manager.application.services import (
 
 logger = getLogger("caption_manager")
 
-_KeyType = TypeVar("_KeyType", bound=Hashable)
-_ValueType = TypeVar("_ValueType")
-
-
-class FolderWeakValueDict(WeakValueDictionary[_KeyType, _ValueType], Generic[_KeyType, _ValueType]):
-    data: dict[_KeyType, KeyedRef[_KeyType, _ValueType]]
-
-    def __init__(self) -> None:
-        super().__init__()
-
-    def __setitem__(self, key: _KeyType, value: _ValueType) -> None:
-        is_new = key not in self
-
-        def _on_remove(ref_obj: object) -> None:
-            logger.debug("Unlocked folder: %s", getattr(key, 'path', key))
-
-        ref_value = KeyedRef(value, _on_remove, key)
-
-        self.data[key] = ref_value
-
-        if is_new:
-            logger.debug("Locked folder: %s", getattr(key, 'path', key))
-
 
 @dataclass(frozen=True)
 class AppConfig:
@@ -83,7 +59,7 @@ class AppProvider(Provider):
 
     @provide
     def folder_lock(self) -> WeakValueDictionary[Hashable, asyncio.Lock]:
-        return FolderWeakValueDict()
+        return WeakValueDictionary()
 
     @provide
     def caption_reader(self, semaphore: asyncio.Semaphore) -> CaptionReaderPort:

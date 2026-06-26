@@ -29,6 +29,6 @@ class AddPrefixService:
             self._lock[folder] = lock = asyncio.Lock()
         async with lock:
             captions = await self.caption_reader.read_folder(folder)
-            PrefixService.run(captions, prefix)
+            await asyncio.to_thread(PrefixService.run, captions, prefix)
             await self.over_write.run(captions)
         return captions.caption_dict

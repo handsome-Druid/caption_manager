@@ -23,9 +23,7 @@ class CaptionReaderImpl:
     @staticmethod
     def _locked_read(file_path: Path) -> str:
         with Lock(file_path, "r", timeout=5, flags=LOCK_SH, encoding="utf-8") as f:
-            logger.debug("Locked file: %s", file_path)
             content = f.read()
-        logger.debug("Unlocked file: %s", file_path)
         return content
 
     async def _read_file(self, file_path: Path) -> str:

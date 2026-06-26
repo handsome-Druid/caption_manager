@@ -3,7 +3,6 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from logging import INFO, DEBUG, StreamHandler, getLogger
 from pathlib import Path
-from socket import socket
 from importlib import metadata
 
 import typer
@@ -32,18 +31,6 @@ def setup_logger(debug: bool = False):
     logger.setLevel(DEBUG if debug else INFO)
     logger.addHandler(_handler)
     logger.propagate = False
-
-class _Server(uvicorn.Server):
-    def __init__(self, config: uvicorn.Config, docs_url: str):
-        super().__init__(config)
-        self._docs_url = docs_url
-
-    async def startup(self, sockets: list[socket] | None = None):
-        await super().startup(sockets=sockets)
-        if not self.should_exit:
-            styled_url = typer.style(self._docs_url, bold=True)
-            logger.debug(f"Swagger UI available at {styled_url}")
-
 
 def _unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     getLogger("caption_manager").exception("Unhandled exception during request.")
@@ -142,9 +129,7 @@ def serve(
         character_tags_file=character_tags_file,
         debug=debug
     )
-    config = uvicorn.Config(app, host=host, port=port)
-    server = _Server(config, docs_url=f"http://{host}:{port}/docs")
-    server.run()
+    uvicorn.run(app, host=host, port=port)
 
 if __name__ == "__main__":
     cli()

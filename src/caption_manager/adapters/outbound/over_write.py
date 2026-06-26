@@ -19,9 +19,7 @@ class OverWriteImpl:
     @staticmethod
     def _locked_write(caption_file: Path, captions: list[str]) -> None:
         with Lock(caption_file, "w", timeout=5, encoding="utf-8") as f:
-            logger.debug("Locked file with write mode: %s", caption_file)
             f.write(','.join(captions))
-        logger.debug("Unlocked file with write mode: %s", caption_file)
 
     @classmethod
     async def _write_caption_file(cls, caption_file: Path, captions: list[str], semaphore: asyncio.Semaphore):

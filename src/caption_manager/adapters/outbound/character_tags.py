@@ -29,9 +29,7 @@ class CharacterTagsImpl:
         if not self.file_path.is_file():
             raise NotFileError(f"{self.file_path} is not a valid file.")
         with Lock(self.file_path, "r", timeout=5, flags=LOCK_SH, encoding="utf-8") as file:
-            logger.debug("Locked file: %s", self.file_path)
             parsed = _CharacterTagsSchema.model_validate_json(file.read())
-        logger.debug("Unlocked file: %s", self.file_path)
         return CharacterTags(
             whitelist=frozenset(parsed.whitelist),
             suffixes=tuple(frozenset(tags) for tags in parsed.suffixes),

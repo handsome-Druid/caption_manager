@@ -20,7 +20,5 @@ class BlacklistTagsImpl:
         if not self.file_path.is_file():
             raise NotFileError(f"{self.file_path} is not a valid file.")
         with Lock(self.file_path, "r", timeout=5, flags=LOCK_SH, encoding="utf-8") as file:
-            logger.debug("Locked file: %s", self.file_path)
             blacklist_tags = [line.strip() for line in file.readlines()]
-        logger.debug("Unlocked file: %s", self.file_path)
         return blacklist_tags

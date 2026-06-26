@@ -29,6 +29,6 @@ class CustomRemoveService:
             self._lock[folder] = lock = asyncio.Lock()
         async with lock:
             captions = await self.caption_reader.read_folder(folder)
-            CustomService.run(captions, custom_tags)
+            await asyncio.to_thread(CustomService.run, captions, custom_tags)
             await self.over_write.run(captions)
         return captions.caption_dict

@@ -539,7 +539,7 @@
             const prefixTags = $("prefix-input").value
                 .split(",")
                 .map((t) => t.trim())
-                .filter((t) => t);
+                .filter(Boolean);
             if (prefixTags.length === 0) {
                 toast("请至少输入一个前缀标签。", false);
                 return;
