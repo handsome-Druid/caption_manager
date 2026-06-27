@@ -77,15 +77,49 @@ jobs:
           sed -i -E "s#(- 构建版本：\`)[^\`]+(\`)#\1${TAG}\2#" docker/caption-manager/NOTICE.md
           grep -E -- '- 构建版本：' docker/caption-manager/NOTICE.md
 
-      # 3d. 同步更新 docker-compose 中 caption-manager 镜像版本
-      #     anima-trainer / wd-llm-caption 固定使用 latest（仅在 Dockerfile 变更时才会重建），故不再随版本号变动
+      # 3d. 检测 anima-trainer / wd-llm-caption 的 Dockerfile 相较上一个 tag 是否有改动
+      #     未改动则跳过对应镜像的构建，docker-compose 沿用上一版本已固定的镜像 tag
+      - name: Detect Dockerfile changes since previous tag
+        id: changes
+        run: |
+          CURRENT_TAG="${{ steps.version.outputs.tag }}"
+          PREV_TAG="$(git tag --list 'v*' --sort=-v:refname | grep -vx "${CURRENT_TAG}" | head -n1)"
+          echo "上一个 tag: ${PREV_TAG:-<无>}"
+
+          check() {
+            name="$1"; path="$2"
+            if [ -z "$PREV_TAG" ]; then
+              echo "${name}=true" >> "$GITHUB_OUTPUT"
+              echo "${name}: 无上一个 tag，需要构建"
+            elif git diff --quiet "$PREV_TAG" -- "$path"; then
+              echo "${name}=false" >> "$GITHUB_OUTPUT"
+              echo "${name}: ${path} 相较 ${PREV_TAG} 未改动，跳过构建"
+            else
+              echo "${name}=true" >> "$GITHUB_OUTPUT"
+              echo "${name}: ${path} 相较 ${PREV_TAG} 有改动，需要构建"
+            fi
+          }
+
+          check anima_trainer docker/anima-trainer/Dockerfile
+          check wd_llm_caption docker/wd-llm-caption-cli/Dockerfile
+
+      # 3e. 同步更新 docker-compose 中镜像版本（始终写固定版本号，不用 latest）
+      #     caption-manager 每次发布都跟随本次版本；
+      #     anima-trainer / wd-llm-caption 仅在镜像重建时才更新固定 tag，未重建则保留上一版本已固定的 tag，
+      #     确保 compose 永远指向 GHCR 上真实存在的镜像版本
       - name: Bump image tags in docker-compose.yml
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           sed -i -E "s#(^\s*image:\s*ghcr\.io/handsome-druid/caption_manager:).*#\1${VERSION}#" docker/docker-compose.yml
+          if [ "${{ steps.changes.outputs.anima_trainer }}" = "true" ]; then
+            sed -i -E "s#(^\s*image:\s*ghcr\.io/handsome-druid/anima-trainer:).*#\1${VERSION}#" docker/docker-compose.yml
+          fi
+          if [ "${{ steps.changes.outputs.wd_llm_caption }}" = "true" ]; then
+            sed -i -E "s#(^\s*image:\s*ghcr\.io/handsome-druid/wd-llm-caption:).*#\1${VERSION}#" docker/docker-compose.yml
+          fi
           grep -E '^\s*image:\s*ghcr\.io/handsome-druid/' docker/docker-compose.yml
 
-      # 3e. 重新生成 uv.lock，使锁文件里的项目版本与依赖解析跟随本次发布
+      # 3f. 重新生成 uv.lock，使锁文件里的项目版本与依赖解析跟随本次发布
       - name: Set up uv
         uses: astral-sh/setup-uv@v6
 
@@ -228,32 +262,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 5a. 检测 anima-trainer / wd-llm-caption 的 Dockerfile 相较上一个 tag 是否有改动
-      #     未改动则跳过对应镜像的构建，沿用 GHCR 上已有的 latest 镜像
-      - name: Detect Dockerfile changes since previous tag
-        id: changes
-        run: |
-          CURRENT_TAG="${{ steps.version.outputs.tag }}"
-          PREV_TAG="$(git tag --list 'v*' --sort=-v:refname | grep -vx "${CURRENT_TAG}" | head -n1)"
-          echo "上一个 tag: ${PREV_TAG:-<无>}"
-
-          check() {
-            name="$1"; path="$2"
-            if [ -z "$PREV_TAG" ]; then
-              echo "${name}=true" >> "$GITHUB_OUTPUT"
-              echo "${name}: 无上一个 tag，需要构建"
-            elif git diff --quiet "$PREV_TAG" -- "$path"; then
-              echo "${name}=false" >> "$GITHUB_OUTPUT"
-              echo "${name}: ${path} 相较 ${PREV_TAG} 未改动，跳过构建"
-            else
-              echo "${name}=true" >> "$GITHUB_OUTPUT"
-              echo "${name}: ${path} 相较 ${PREV_TAG} 有改动，需要构建"
-            fi
-          }
-
-          check anima_trainer docker/anima-trainer/Dockerfile
-          check wd_llm_caption docker/wd-llm-caption-cli/Dockerfile
-
+      # 5a. 回收磁盘空间，准备镜像构建
       - name: Reclaim disk space before builds
         run: |
           df -h /
