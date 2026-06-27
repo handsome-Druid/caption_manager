@@ -57,4 +57,4 @@ RUN printf '%s\n' \
 EXPOSE 3000
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
-CMD ["./training-ui/start_linux.sh"]
+CMD ["bash", "./training-ui/start_linux.sh"]
