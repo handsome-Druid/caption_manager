@@ -415,13 +415,13 @@ jobs:
 
       # 6. 打包 docker 文件夹
       - name: Archive docker folder
-        run: zip -r docker.zip docker
+        run: cd docker && zip -r ../anima-lora-compose-${{ steps.version.outputs.version }}.zip .
 
       # 6b. 为发布资产生成 build provenance attestation
-      - name: Attest build provenance for docker.zip
+      - name: Attest build provenance for release archive
         uses: actions/attest-build-provenance@v2
         with:
-          subject-path: docker.zip
+          subject-path: anima-lora-compose-${{ steps.version.outputs.version }}.zip
 
       # 7. 发布 Release 并附带 docker.zip
       - name: Create GitHub Release
@@ -430,5 +430,5 @@ jobs:
           tag_name: ${{ steps.version.outputs.tag }}
           name: ${{ steps.version.outputs.tag }}
           files: |
-            docker.zip
+            anima-lora-compose-${{ steps.version.outputs.version }}.zip
           generate_release_notes: true
