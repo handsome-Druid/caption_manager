@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   release:
-    if: startsWith(github.event.head_commit.message, 'v')
+    if: contains(toJSON(github.event.commits), '"message":"v')
     runs-on: ubuntu-latest
     steps:
       # 1. 检出默认分支（master），需要完整历史以便机器人提交并推送版本号
@@ -39,15 +39,20 @@ jobs:
           echo "=== 清理后磁盘使用 ==="
           df -h /
 
-      # 2. 从提交信息首行解析版本号（格式必须为 vX.Y.Z）
+      # 2. 从推送的提交中解析版本号（格式必须为 vX.Y.Z）
+      #    兼容 git pull --no-rebase 产生的合并提交：通过 git log 在整个推送范围内查找
       - name: Resolve version from commit message
         id: version
         run: |
-          RAW_MSG='${{ github.event.head_commit.message }}'
-          TAG="$(printf '%s' "$RAW_MSG" | head -n1 | tr -d '\r')"
+          BEFORE="${{ github.event.before }}"
+          if [[ "$BEFORE" =~ ^0+$ ]]; then
+            TAG="$(git log --no-merges --format='%s' | grep -Em1 '^v[0-9]+\.[0-9]+\.[0-9]+$' || true)"
+          else
+            TAG="$(git log --no-merges --format='%s' "${BEFORE}..${GITHUB_SHA}" | grep -Em1 '^v[0-9]+\.[0-9]+\.[0-9]+$' || true)"
+          fi
 
           if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "提交信息首行必须是 vX.Y.Z，当前为: $TAG"
+            echo "在推送的提交中未找到 vX.Y.Z 格式的提交信息，当前为: ${TAG}"
             exit 1
           fi
 
