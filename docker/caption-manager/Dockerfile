@@ -37,7 +37,7 @@ ENV PYTHONUNBUFFERED=1
 ENV UV_PYTHON=3.13t
 ENV PYTHON_GIL=0
 
-RUN git clone --branch v0.4.4 https://github.com/handsome-Druid/caption_manager.git --depth 1
+RUN git clone --branch v0.4.5 https://github.com/handsome-Druid/caption_manager.git --depth 1
 WORKDIR /caption_manager
 
 RUN mkdir -p /caption_manager_defaults \
