@@ -24,7 +24,6 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      # 1b. 提前释放磁盘空间，删除 runner 上用不到的预装工具，避免后续构建因磁盘已满失败
       - name: Free up disk space
         run: |
           echo "=== 清理前磁盘使用 ==="
@@ -229,14 +228,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 5-pre. 构建前再次回收磁盘
-      - name: Reclaim disk space before builds
-        run: |
-          df -h /
-          docker system prune --all --force --volumes || true
-          find . -mindepth 1 -maxdepth 1 ! -name 'docker' -exec rm -rf {} +
-          df -h /
-
       # 5a. 检测 anima-trainer / wd-llm-caption 的 Dockerfile 相较上一个 tag 是否有改动
       #     未改动则跳过对应镜像的构建，沿用 GHCR 上已有的 latest 镜像
       - name: Detect Dockerfile changes since previous tag
@@ -263,6 +254,13 @@ jobs:
           check anima_trainer docker/anima-trainer/Dockerfile
           check wd_llm_caption docker/wd-llm-caption-cli/Dockerfile
 
+      - name: Reclaim disk space before builds
+        run: |
+          df -h /
+          docker system prune --all --force --volumes || true
+          find . -mindepth 1 -maxdepth 1 ! -name 'docker' -exec rm -rf {} +
+          df -h /
+
       - name: Build and push caption-manager image
         id: build_caption_manager
         uses: docker/build-push-action@v6
@@ -280,7 +278,6 @@ jobs:
             type=gha,mode=min,scope=shared-cuda-base
             type=gha,mode=min,scope=caption-manager
 
-      # 清理本地镜像与构建缓存，为下一个镜像腾出磁盘
       - name: Reclaim disk space before anima-trainer build
         run: |
           df -h /
@@ -306,7 +303,6 @@ jobs:
             type=gha,mode=min,scope=shared-cuda-base
             type=gha,mode=min,scope=anima-trainer
 
-      # 构建 wd-llm-caption 前再次回收磁盘
       - name: Reclaim disk space before wd-llm-caption build
         run: |
           df -h /
