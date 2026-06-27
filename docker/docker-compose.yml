@@ -7,7 +7,6 @@ services:
     container_name: anima-trainer
     ports:
       - "13000:3000"
-      - "6006-7000:6006-7000"
     volumes:
       - ./anima-trainer/models:/anima-trainer/models
       - ./datasets:/datasets
