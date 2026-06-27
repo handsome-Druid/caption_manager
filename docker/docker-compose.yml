@@ -17,6 +17,7 @@ services:
       - /etc/localtime:/etc/localtime:ro
     environment:
       - HF_HOME=/root/.cache/huggingface
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
     networks:
       - anima-net
     deploy:
