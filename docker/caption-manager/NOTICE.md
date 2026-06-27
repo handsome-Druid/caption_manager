@@ -5,7 +5,7 @@
 ## 拉取版本
 
 - 仓库：[handsome-Druid/caption_manager](https://github.com/handsome-Druid/caption_manager)
-- 构建版本：`v0.4.6`
+- 构建版本：`v0.4.7`
 - 许可证：BSD 3-Clause（见仓库根目录 [`LICENSE`](../../LICENSE)）
 
 ## 说明
