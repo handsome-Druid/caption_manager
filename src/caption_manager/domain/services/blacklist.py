@@ -7,13 +7,17 @@ logger = getLogger(__name__)
 class BlacklistService:
 
     @staticmethod
+    def _normalize(tag: str):
+        return tag.replace("_", " ")
+
+    @staticmethod
     def run(captions: Captions, blacklist_tags: list[str]):
         removed_tags: set[str] = set()
-        blacklist_set = set(blacklist_tags)
+        blacklist_set = {BlacklistService._normalize(tag) for tag in blacklist_tags}
 
         for key, caption_list in captions.file_dict.items():
-            kept = [caption for caption in caption_list if caption not in blacklist_set]
-            removed_in_key = [caption for caption in caption_list if caption in blacklist_set]
+            kept = [caption for caption in caption_list if BlacklistService._normalize(caption) not in blacklist_set]
+            removed_in_key = [caption for caption in caption_list if BlacklistService._normalize(caption) in blacklist_set]
             captions.file_dict[key] = kept
             removed_tags.update(removed_in_key)
 
