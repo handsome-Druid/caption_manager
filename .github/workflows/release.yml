@@ -41,16 +41,13 @@ jobs:
           df -h /
 
       # 2. 从推送的提交中解析版本号（格式必须为 vX.Y.Z）
-      #    兼容 git pull --no-rebase 产生的合并提交：通过 git log 在整个推送范围内查找
+      #    直接解析 github.event.commits JSON，兼容 merge 推送（v 提交可能已是 BEFORE 的祖先，git log 无法找到）
       - name: Resolve version from commit message
         id: version
+        env:
+          COMMITS_JSON: ${{ toJSON(github.event.commits) }}
         run: |
-          BEFORE="${{ github.event.before }}"
-          if [[ "$BEFORE" =~ ^0+$ ]]; then
-            TAG="$(git log --no-merges --format='%s' | grep -Em1 '^v[0-9]+\.[0-9]+\.[0-9]+$' || true)"
-          else
-            TAG="$(git log --no-merges --format='%s' "${BEFORE}..${GITHUB_SHA}" | grep -Em1 '^v[0-9]+\.[0-9]+\.[0-9]+$' || true)"
-          fi
+          TAG="$(echo "$COMMITS_JSON" | jq -r '[.[] | .message | split("\n")[0] | select(test("^v[0-9]+\\.[0-9]+\\.[0-9]+$"))][0] // ""')"
 
           if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "在推送的提交中未找到 vX.Y.Z 格式的提交信息，当前为: ${TAG}"
