@@ -7,11 +7,11 @@ logger = getLogger(__name__)
 class CharacterService:
     @staticmethod
     def _matches_prefix(caption: str, prefix: str):
-        return caption == prefix or caption.startswith(f"{prefix} ")
+        return caption == prefix or caption.startswith(f"{prefix} ") or caption.startswith(f"{prefix}_")
 
     @staticmethod
     def _matches_suffix(caption: str, suffix: str):
-        return caption == suffix or caption.endswith(f" {suffix}")
+        return caption == suffix or caption.endswith(f" {suffix}") or caption.endswith(f"_{suffix}")
 
     @staticmethod
     def _is_kept(caption: str, character_tags: CharacterTags, index: int):
