@@ -262,7 +262,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 5a. 回收磁盘空间，准备镜像构建
+      # 5a. 复制根目录 filtering_tags 到 caption-manager 构建上下文，确保 release zip 包含最新版本
+      - name: Sync filtering_tags into caption-manager build context
+        run: |
+          cp -r filtering_tags docker/caption-manager/filtering_tags
+
+      # 5b. 回收磁盘空间，准备镜像构建
       - name: Reclaim disk space before builds
         run: |
           df -h /
@@ -362,7 +367,7 @@ jobs:
           subject-digest: ${{ steps.build_wd_llm_caption.outputs.digest }}
           push-to-registry: true
 
-      # 5b. 为三个镜像生成 SBOM（SPDX JSON）
+      # 5c. 为三个镜像生成 SBOM（SPDX JSON）
       - name: Generate SBOM for caption-manager image
         uses: anchore/sbom-action@v0
         with:
@@ -386,7 +391,7 @@ jobs:
           format: spdx-json
           output-file: sbom-wd-llm-caption.spdx.json
 
-      # 5c. 将 SBOM 作为 attestation 绑定到各镜像 digest 并推送到 registry
+      # 5d. 将 SBOM 作为 attestation 绑定到各镜像 digest 并推送到 registry
       - name: Attest SBOM for caption-manager image
         uses: actions/attest-sbom@v2
         with:
