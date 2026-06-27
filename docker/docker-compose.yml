@@ -31,7 +31,7 @@ services:
     build:
       context: ./caption-manager
       dockerfile: Dockerfile
-    image: ghcr.io/handsome-druid/caption_manager:0.3.6
+    image: ghcr.io/handsome-druid/caption_manager:0.3.7
     container_name: caption-manager
     ports:
       - "1357:1357"
