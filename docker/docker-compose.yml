@@ -5,6 +5,7 @@ services:
       dockerfile: Dockerfile
     image: ghcr.io/handsome-druid/anima-trainer:0.4.2
     container_name: anima-trainer
+    ipc: host
     ports:
       - "13000:3000"
     volumes:
