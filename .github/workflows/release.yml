@@ -13,7 +13,8 @@ permissions:
 
 jobs:
   release:
-    if: contains(toJSON(github.event.commits), '"message":"v')
+    if: |
+      contains(toJSON(github.event.commits), '"message": "v')
     runs-on: ubuntu-latest
     steps:
       # 1. 检出默认分支（master），需要完整历史以便机器人提交并推送版本号
