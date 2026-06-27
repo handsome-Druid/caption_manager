@@ -279,6 +279,7 @@ jobs:
             type=gha,mode=min,scope=caption-manager
 
       - name: Reclaim disk space before anima-trainer build
+        if: steps.changes.outputs.anima_trainer == 'true'
         run: |
           df -h /
           docker system prune --all --force --volumes || true
@@ -304,6 +305,7 @@ jobs:
             type=gha,mode=min,scope=anima-trainer
 
       - name: Reclaim disk space before wd-llm-caption build
+        if: steps.changes.outputs.wd_llm_caption == 'true'
         run: |
           df -h /
           docker system prune --all --force --volumes || true
