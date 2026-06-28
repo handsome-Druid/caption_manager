@@ -36,11 +36,32 @@
             background: var(--card);
             border-bottom: 1px solid var(--border);
             padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
         header h1 {
             margin: 0;
             font-size: 20px;
+        }
+
+        #btn-lang {
+            background: #fff;
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 5px 14px;
+            font-size: 13px;
+            cursor: pointer;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        #btn-lang:hover {
+            background: #f0f1f4;
+            border-color: var(--primary);
+            color: var(--primary);
         }
 
         main {
@@ -304,85 +325,86 @@
 <body>
     <header>
         <h1>Caption Manager</h1>
+        <button id="btn-lang">EN</button>
     </header>
 
     <main>
         <div class="card">
-            <label for="folder">数据集子文件夹 (folder)</label>
+            <label for="folder" data-i18n="folderLabel">数据集子文件夹 (folder)</label>
             <div class="folder-input">
                 <span class="folder-prefix">datasets/</span>
                 <input type="text" id="folder" autocomplete="off" />
             </div>
-            <div class="hint">留空时默认读取 datasets；填写 xxx 则读取 datasets/xxx。将递归遍历该文件夹下的所有子文件夹并打开其中的标签文件。</div>
+            <div class="hint" data-i18n="folderHint">留空时默认读取 datasets；填写 xxx 则读取 datasets/xxx。将递归遍历该文件夹下的所有子文件夹并打开其中的标签文件。</div>
         </div>
 
         <!-- 1. 查看 / 自定义移除标签 -->
         <div class="card">
-            <h2>1. 查看与移除标签</h2>
+            <h2 data-i18n="card1Title">1. 查看与移除标签</h2>
             <div class="toolbar">
-                <button id="btn-load">加载当前标签</button>
+                <button id="btn-load" data-i18n="btnLoad">加载当前标签</button>
                 <span class="count" id="tag-count"></span>
             </div>
             <div id="tags" class="tags"></div>
             <div class="toolbar" id="tag-actions" style="display:none;">
                 <span class="count" id="selected-count">已选 0 个</span>
-                <button class="secondary" id="btn-clear">清空选择</button>
-                <button id="btn-remove" disabled>一键移除选中标签</button>
+                <button class="secondary" id="btn-clear" data-i18n="btnClear">清空选择</button>
+                <button id="btn-remove" disabled data-i18n="btnRemove">一键移除选中标签</button>
             </div>
-            <div class="hint">点击标签可切换选中（深色），点击「一键移除选中标签」执行移除。</div>
+            <div class="hint" data-i18n="tagHint">点击标签可切换选中（深色），点击「一键移除选中标签」执行移除。</div>
         </div>
 
         <!-- 2. 一键自动移除 -->
         <div class="card">
-            <h2>2. 自动移除配置</h2>
-            <div class="group-label">重叠标签</div>
+            <h2 data-i18n="card2Title">2. 自动移除配置</h2>
+            <div class="group-label" data-i18n="overlapGroup">重叠标签</div>
             <div class="radio-group">
                 <label class="radio-line">
                     <input type="checkbox" id="cfg-overlap" />
                     <span>
-                        <span class="title">移除重叠标签 (overlap)</span>
-                        <span class="desc">移除被更具体标签覆盖的重叠 / 冗余标签。</span>
+                        <span class="title" data-i18n="overlapTitle">移除重叠标签 (overlap)</span>
+                        <span class="desc" data-i18n="overlapDesc">移除被更具体标签覆盖的重叠 / 冗余标签。</span>
                     </span>
                 </label>
             </div>
-            <div class="group-label">角色标签处理强度 (character_range)</div>
+            <div class="group-label" data-i18n="characterGroup">角色标签处理强度 (character_range)</div>
             <div class="radio-group">
                 <label class="radio-line">
                     <input type="radio" name="character-range" value="0" checked />
                     <span>
-                        <span class="title">0 · 保留角色标签</span>
-                        <span class="desc">仅移除黑名单标签。</span>
+                        <span class="title" data-i18n="char0Title">0 · 保留角色标签</span>
+                        <span class="desc" data-i18n="char0Desc">仅移除黑名单标签。</span>
                     </span>
                 </label>
                 <label class="radio-line">
                     <input type="radio" name="character-range" value="1" />
                     <span>
-                        <span class="title">1 · 移除人类标签</span>
-                        <span class="desc">移除人类相关角色标签。</span>
+                        <span class="title" data-i18n="char1Title">1 · 移除人类标签</span>
+                        <span class="desc" data-i18n="char1Desc">移除人类相关角色标签。</span>
                     </span>
                 </label>
                 <label class="radio-line">
                     <input type="radio" name="character-range" value="2" />
                     <span>
-                        <span class="title">2 · 移除人类 + 兽化标签</span>
-                        <span class="desc">在等级 1 基础上，再移除猫耳、尾巴等兽化标签。</span>
+                        <span class="title" data-i18n="char2Title">2 · 移除人类 + 兽化标签</span>
+                        <span class="desc" data-i18n="char2Desc">在等级 1 基础上，再移除猫耳、尾巴等兽化标签。</span>
                     </span>
                 </label>
             </div>
             <div class="toolbar">
-                <button id="btn-auto-remove">一键自动移除</button>
+                <button id="btn-auto-remove" data-i18n="btnAutoRemove">一键自动移除</button>
             </div>
         </div>
 
         <!-- 3. 添加前缀标签 -->
         <div class="card">
-            <h2>3. 添加前缀标签</h2>
-            <label for="prefix-input">前缀标签 (prefix)</label>
-            <input type="text" id="prefix-input" autocomplete="off" placeholder="多个标签用英文逗号分隔，如：1girl, solo" />
+            <h2 data-i18n="card3Title">3. 添加前缀标签</h2>
+            <label for="prefix-input" data-i18n="prefixLabel">前缀标签 (prefix)</label>
+            <input type="text" id="prefix-input" autocomplete="off" data-i18n-placeholder="prefixPlaceholder" placeholder="多个标签用英文逗号分隔，如：1girl, solo" />
             <div class="toolbar">
-                <button id="btn-add-prefix">添加到每个文件头部</button>
+                <button id="btn-add-prefix" data-i18n="btnAddPrefix">添加到每个文件头部</button>
             </div>
-            <div class="hint">将这些标签按顺序置于每个标签文件的最前面；若文件中已存在相同标签则会移动到头部，不会重复。</div>
+            <div class="hint" data-i18n="prefixHint">将这些标签按顺序置于每个标签文件的最前面；若文件中已存在相同标签则会移动到头部，不会重复。</div>
         </div>
     </main>
 
@@ -391,6 +413,107 @@
 
     <script>
         const $ = (id) => document.getElementById(id);
+
+        // ---- i18n ----
+        const i18n = {
+            zh: {
+                folderLabel: '数据集子文件夹 (folder)',
+                folderHint: '留空时默认读取 datasets；填写 xxx 则读取 datasets/xxx。将递归遍历该文件夹下的所有子文件夹并打开其中的标签文件。',
+                card1Title: '1. 查看与移除标签',
+                btnLoad: '加载当前标签',
+                btnClear: '清空选择',
+                btnRemove: '一键移除选中标签',
+                tagHint: '点击标签可切换选中（深色），点击「一键移除选中标签」执行移除。',
+                card2Title: '2. 自动移除配置',
+                overlapGroup: '重叠标签',
+                overlapTitle: '移除重叠标签 (overlap)',
+                overlapDesc: '移除被更具体标签覆盖的重叠 / 冗余标签。',
+                characterGroup: '角色标签处理强度 (character_range)',
+                char0Title: '0 · 保留角色标签',
+                char0Desc: '仅移除黑名单标签。',
+                char1Title: '1 · 移除人类标签',
+                char1Desc: '移除人类相关角色标签。',
+                char2Title: '2 · 移除人类 + 兽化标签',
+                char2Desc: '在等级 1 基础上，再移除猫耳、尾巴等兽化标签。',
+                btnAutoRemove: '一键自动移除',
+                card3Title: '3. 添加前缀标签',
+                prefixLabel: '前缀标签 (prefix)',
+                prefixPlaceholder: '多个标签用英文逗号分隔，如：1girl, solo',
+                btnAddPrefix: '添加到每个文件头部',
+                prefixHint: '将这些标签按顺序置于每个标签文件的最前面；若文件中已存在相同标签则会移动到头部，不会重复。',
+                tagCountFmt: (n) => `共 ${n} 个标签`,
+                selectedFmt: (n) => `已选 ${n} 个`,
+                loadSuccess: (n) => `加载成功，共 ${n} 个标签。`,
+                errSelectAtLeastOne: '请至少选择一个标签。',
+                removeSuccess: (n) => `已移除 ${n} 个标签。`,
+                autoRemoveSuccess: '自动移除成功。',
+                errInputAtLeastOne: '请至少输入一个前缀标签。',
+                addPrefixSuccess: (n) => `已添加 ${n} 个前缀标签。`,
+                reqFailed: (msg) => `请求失败：${msg}`,
+                langToggle: 'EN',
+            },
+            en: {
+                folderLabel: 'Dataset subfolder (folder)',
+                folderHint: 'Leave blank to use the datasets root; enter "xxx" to use datasets/xxx. All subfolders are scanned recursively.',
+                card1Title: '1. View & Remove Tags',
+                btnLoad: 'Load Tags',
+                btnClear: 'Clear Selection',
+                btnRemove: 'Remove Selected Tags',
+                tagHint: 'Click a tag to toggle selection (dark = selected), then click "Remove Selected Tags".',
+                card2Title: '2. Auto-Remove Configuration',
+                overlapGroup: 'Overlap Tags',
+                overlapTitle: 'Remove overlapping tags (overlap)',
+                overlapDesc: 'Remove redundant tags that are covered by more specific ones.',
+                characterGroup: 'Character tag removal intensity (character_range)',
+                char0Title: '0 · Keep character tags',
+                char0Desc: 'Only remove blacklisted tags.',
+                char1Title: '1 · Remove human tags',
+                char1Desc: 'Also remove human-related character tags.',
+                char2Title: '2 · Remove human + beast tags',
+                char2Desc: 'On top of level 1, also remove beast-related tags such as cat ears and tails.',
+                btnAutoRemove: 'Auto Remove',
+                card3Title: '3. Add Prefix Tags',
+                prefixLabel: 'Prefix tags (prefix)',
+                prefixPlaceholder: 'Separate multiple tags with commas, e.g.: 1girl, solo',
+                btnAddPrefix: 'Prepend to every file',
+                prefixHint: 'These tags are inserted at the beginning of every tag file in order. Existing tags are moved to the front rather than duplicated.',
+                tagCountFmt: (n) => `${n} tag${n !== 1 ? 's' : ''} total`,
+                selectedFmt: (n) => `${n} selected`,
+                loadSuccess: (n) => `Loaded. ${n} tag${n !== 1 ? 's' : ''} found.`,
+                errSelectAtLeastOne: 'Please select at least one tag.',
+                removeSuccess: (n) => `${n} tag${n !== 1 ? 's' : ''} removed.`,
+                autoRemoveSuccess: 'Auto-remove completed.',
+                errInputAtLeastOne: 'Please enter at least one prefix tag.',
+                addPrefixSuccess: (n) => `${n} prefix tag${n !== 1 ? 's' : ''} added.`,
+                reqFailed: (msg) => `Request failed: ${msg}`,
+                langToggle: '中文',
+            },
+        };
+
+        let currentLang = localStorage.getItem('caption-manager-lang') || 'zh';
+        let lastTagCount = null;
+
+        function applyLang(lang) {
+            document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+            const tr = i18n[lang];
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                el.textContent = tr[el.dataset.i18n];
+            });
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                el.placeholder = tr[el.dataset.i18nPlaceholder];
+            });
+            $('selected-count').textContent = tr.selectedFmt(selected.size);
+            if (lastTagCount !== null) {
+                $('tag-count').textContent = tr.tagCountFmt(lastTagCount);
+            }
+            $('btn-lang').textContent = tr.langToggle;
+            localStorage.setItem('caption-manager-lang', lang);
+            currentLang = lang;
+        }
+
+        function toggleLang() {
+            applyLang(currentLang === 'zh' ? 'en' : 'zh');
+        }
 
         let toastTimer = null;
         function toast(message, ok) {
@@ -406,7 +529,6 @@
             return input ? "datasets/" + input : "datasets";
         }
 
-        // 统一处理响应：2xx 成功；否则读取 detail 显示
         async function handleResponse(res, successMsg) {
             if (res.ok) {
                 if (successMsg) toast(successMsg, true);
@@ -417,7 +539,7 @@
                 const data = await res.json();
                 if (data && data.detail) detail = data.detail;
             } catch (err) {
-                console.debug("响应无 JSON body", err);
+                console.debug("no JSON body", err);
             }
             toast(detail, false);
             return false;
@@ -429,7 +551,7 @@
                 try {
                     return await fn(...args);
                 } catch (err) {
-                    toast("请求失败：" + err.message, false);
+                    toast(i18n[currentLang].reqFailed(err.message), false);
                 } finally {
                     btn.disabled = false;
                 }
@@ -446,7 +568,7 @@
             if (!(await handleResponse(res))) return;
             const tags = await res.json();
             renderTags(tags);
-            toast("加载成功，共 " + Object.keys(tags).length + " 个标签。", true);
+            toast(i18n[currentLang].loadSuccess(Object.keys(tags).length), true);
         });
 
         function renderTags(tagCounts) {
@@ -454,7 +576,8 @@
             const entries = Object.entries(tagCounts).sort(
                 (a, b) => b[1] - a[1] || a[0].localeCompare(b[0])
             );
-            $("tag-count").textContent = "共 " + entries.length + " 个标签";
+            lastTagCount = entries.length;
+            $("tag-count").textContent = i18n[currentLang].tagCountFmt(entries.length);
             const box = $("tags");
             box.innerHTML = "";
             entries.forEach(([t, count]) => {
@@ -480,7 +603,7 @@
         }
 
         function updateSelected() {
-            $("selected-count").textContent = "已选 " + selected.size + " 个";
+            $("selected-count").textContent = i18n[currentLang].selectedFmt(selected.size);
             $("btn-remove").disabled = selected.size === 0;
         }
 
@@ -496,7 +619,7 @@
             const folder = getFolder();
             if (!folder) return;
             if (selected.size === 0) {
-                toast("请至少选择一个标签。", false);
+                toast(i18n[currentLang].errSelectAtLeastOne, false);
                 return;
             }
             const customTags = Array.from(selected);
@@ -505,8 +628,7 @@
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ folder, custom_tags: customTags }),
             });
-            if (!(await handleResponse(res, "已移除 " + customTags.length + " 个标签。"))) return;
-            // 直接用返回的 set 刷新标签列表，保持视图同步
+            if (!(await handleResponse(res, i18n[currentLang].removeSuccess(customTags.length)))) return;
             renderTags(await res.json());
         });
 
@@ -527,8 +649,7 @@
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(body),
             });
-            if (!(await handleResponse(res, "自动移除成功。"))) return;
-            // 直接用返回的 set 刷新标签列表，保持视图同步
+            if (!(await handleResponse(res, i18n[currentLang].autoRemoveSuccess))) return;
             renderTags(await res.json());
         });
 
@@ -541,7 +662,7 @@
                 .map((t) => t.trim())
                 .filter(Boolean);
             if (prefixTags.length === 0) {
-                toast("请至少输入一个前缀标签。", false);
+                toast(i18n[currentLang].errInputAtLeastOne, false);
                 return;
             }
             const res = await fetch("/v1/add_prefix", {
@@ -549,10 +670,13 @@
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ folder, prefix: prefixTags }),
             });
-            if (!(await handleResponse(res, "已添加 " + prefixTags.length + " 个前缀标签。"))) return;
-            // 直接用返回的 dict 刷新标签列表，保持视图同步
+            if (!(await handleResponse(res, i18n[currentLang].addPrefixSuccess(prefixTags.length)))) return;
             renderTags(await res.json());
         });
+
+        // ---- 初始化语言 ----
+        $('btn-lang').addEventListener('click', toggleLang);
+        applyLang(currentLang);
     </script>
 </body>
 
