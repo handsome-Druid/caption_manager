@@ -53,6 +53,11 @@ RUN pip install -U -r requirements_wd.txt \
 # 3) Florence-2 的 modeling_florence2.py 远程动态加载时需要 einops，但项目 requirements 漏写
 RUN pip install "gradio>=5.1.0,<6.0" "huggingface_hub<1.0" einops
 
+# 用 jemalloc 接管分配器并开后台回收，及时把空闲内存还给系统。
+RUN apt-get update && apt-get install -y --no-install-recommends libjemalloc2 \
+    && rm -rf /var/lib/apt/lists/*
+ENV LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2
+
 # 开放 Gradio GUI 端口
 EXPOSE 8282
 
