@@ -33,7 +33,7 @@ services:
     build:
       context: ./caption-manager
       dockerfile: Dockerfile
-    image: ghcr.io/handsome-druid/caption_manager:0.4.7
+    image: ghcr.io/handsome-druid/caption_manager:0.5.0
     container_name: caption-manager
     ports:
       - "1357:1357"
@@ -60,6 +60,8 @@ services:
       HF_HOME: /wd-llm-caption-cli/cache/huggingface
       TRANSFORMERS_CACHE: /wd-llm-caption-cli/cache/huggingface
       MODELSCOPE_CACHE: /wd-llm-caption-cli/cache/modelscope
+      MALLOC_CONF: background_thread:true,dirty_decay_ms:1000,muzzy_decay_ms:1000
+      PYTORCH_CUDA_ALLOC_CONF: expandable_segments:True
     volumes:
       - ./wd-llm-caption-cli/models:/wd-llm-caption-cli/models
       - ./wd-llm-caption-cli/cache:/wd-llm-caption-cli/cache
